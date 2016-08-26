@@ -19,7 +19,6 @@ passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'passwor
                 return done(err);
             if (!result)
                 return done(null, false);
-            console.log('넘어간다');
             done(null, user);
         });
     });
@@ -33,7 +32,7 @@ passport.use(new FacebookStrategy({
     },
     function(accessToken, refreshToken, profile, done) {
         console.log(accessToken);
-        User.findOrCreate(profile, function (err, user) {
+        User.FB_findOrCreate(profile, function (err, user) {
             if (err) {
                 return done(err);
             }
@@ -46,7 +45,7 @@ passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
     }, function(accessToken, refreshToken, profile, done) {
-        User.findOrCreate(profile, function (err, user) {
+        User.FB_findOrCreate(profile, function (err, user) {
             if (err) {
                 return done(err);
             }
@@ -72,6 +71,7 @@ router.post('/local/login', isSecure, function(req, res, next) {
             return res.status(401).send({
                 message: '로그인 실패'
             });
+
         req.login(user, function(err) { // req.user를 만들어 준다.
             if (err)
                 return next(err);
