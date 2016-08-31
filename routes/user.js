@@ -3,6 +3,8 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
+var formidable = require('formidable');
+var path = require('path');
 
 /* 로컬 정보 생성
 router.post('/', function(req, res, next) {
@@ -34,7 +36,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 
     newUser.id = req.user.id;
     newUser.facebook_id = req.user.facebook_id;
-    newUser.image = req.body.image;
+    //newUser.image = req.body.image;
     newUser.gender = req.body.gender;
     newUser.birth = req.body.birth;
     newUser.country = req.body.country;
@@ -52,7 +54,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
     });
 });
 /* 회원 정보 조회 */
-router.get('/:id', function(req, res, next) {
+router.get('/:id', isAuthenticated, function(req, res, next) {
     var message = '회원 정보 조회 완료';
     var showUser = {};
     showUser.id = req.params.id;

@@ -66,7 +66,7 @@ passport.use(new FacebookStrategy({
         profileFields: ['id', 'displayName', 'name', 'emails', 'gender', 'profileUrl', 'photos']
     },
     function(accessToken, refreshToken, profile, done) {
-        console.log(accessToken);
+        console.log('액세스 토큰: ' + accessToken);
         User.FB_findOrCreate(profile, function (err, user) {
             if (err) {
                 return done(err);

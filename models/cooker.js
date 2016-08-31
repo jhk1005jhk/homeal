@@ -1,5 +1,7 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var path = require('path');
+var url = require('url');
 
 /* 쿠커 정보 조회(1) */
 function showCookerInfo(data, callback) {
@@ -10,6 +12,8 @@ function showCookerInfo(data, callback) {
         if (err) {
             return callback(err);
         }
+        var cooker = {};
+
         dbConn.query(sql, [data.id], function(err, results) {
             if (err) {
                 return callback(err);

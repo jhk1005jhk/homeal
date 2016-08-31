@@ -5,7 +5,7 @@ var DummyUser = {
 };
 
 var dbPool = require('../models/common').dbPool;
-var async = require('async');
+var async = require('async')
 
 /* 로컬 관련 기능 */
 function findByEmail(email, callback) {
@@ -119,7 +119,7 @@ function findOrCreate(profile, callback) {
 /* 회원 정보 생성 */
 function registerUser(newUser, callback) {
     var sql_registerUser = 'update user ' +
-                            'set image = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ?, type = ? ' +
+                            'set gender = ?, birth = ?, country = ?, phone = ?, introduce = ?, type = ? ' +
                             'where facebook_id = ?';
     var sql_registerCooker = 'insert into cooker (user_id) ' +
                               'values (?)';
@@ -166,7 +166,7 @@ function registerUser(newUser, callback) {
 
         function registerUser(callback) {
             dbConn.query(sql_registerUser,
-                [newUser.image, newUser.gender, newUser.birth, newUser.country,
+                [newUser.gender, newUser.birth, newUser.country,
                     newUser.phone, newUser.introduce, newUser.type, newUser.facebook_id], function(err, result) {
                     if (err) {
                         return console.log(err);
@@ -228,18 +228,18 @@ function showUser(showUser, callback) {
 
         function selectUser(type, callback) {
             if (type === 'cooker') {
-                dbConn.query(sql_findCooker, [showUser.id], function(err, result) {
+                dbConn.query(sql_findCooker, [showUser.id], function(err, results) {
                     if (err) {
                         return console.log(err);
                     }
-                    callback(null, result);
+                    callback(null, results);
                 });
             } else if (type === 'eater') {
-                dbConn.query(sql_findEater, [showUser.id], function(err, result) {
+                dbConn.query(sql_findEater, [showUser.id], function(err, results) {
                     if (err) {
                         return console.log(err);
                     }
-                    callback(null, result);
+                    callback(null, results);
                 });
             }
         }
@@ -349,10 +349,10 @@ function FB_findOrCreate(profile, callback) {
                               'from user ' +
                               'where facebook_id = ?';
 
-    var sql_create_facebookid = 'insert into user(email, name, facebook_id) ' +
-                                'values(?, ?, ?)';
-
+    var sql_create_facebookid = 'insert into user(email, image, name, facebook_id) ' +
+                                'values(?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
+        console.log(profile.photos[0].value);
         if (err)
             return callback(err);
         // homealdb에 facebook_id(profile.id)가 있는지 확인
@@ -369,12 +369,11 @@ function FB_findOrCreate(profile, callback) {
                 user.name = results[0].name;
                 user.email = results[0].email;
                 user.facebook_id = results[0].facebook_id;
-                console.log(user);
                 return callback(null, user);
             }
 
             // profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
-            dbConn.query(sql_create_facebookid, [profile.emails[0].value, profile.displayName, profile.id], function (err, result) {
+            dbConn.query(sql_create_facebookid, [profile.emails[0].value, profile.photos[0].value, profile.displayName, profile.id], function (err, result) {
                 dbConn.release();
                 if (err)
                     return callback(err);

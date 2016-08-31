@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var Menu = require('../models/menu');
+var formidable = require('formidable');
+var path = require('path');
 
 /* 메뉴 생성 */
 router.post('/', function(req, res, next) {
