@@ -7,6 +7,7 @@ var FacebookTokenStrategy = require('passport-facebook-token');
 var User = require('../models/user');
 var isSecure = require('./common').isSecure;
 
+// 로컬 로그인
 passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },
     function(email, password, done) {
     User.findByEmail(email, function(err, user) {
@@ -23,54 +24,16 @@ passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'passwor
         });
     });
 }));
-
-passport.use(new FacebookStrategy({
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-        profileFields: ['id', 'displayName', 'name', 'emails', 'gender', 'profileUrl', 'photos']
-    },
-    function(accessToken, refreshToken, profile, done) {
-        console.log(accessToken);
-        User.FB_findOrCreate(profile, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            return done(null, user);
-        });
-    }
-));
-
-passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-    }, function(accessToken, refreshToken, profile, done) {
-        User.FB_findOrCreate(profile, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            return done(null, user);
-        });
-    }
-));
-
-passport.serializeUser(function(user, done) {
-    done(null, user.name);
-});
-passport.deserializeUser(function(name, done) {
-    done(null, name);
-});
-
-
 /* 로컬 로그인 */
-router.post('/local/login', isSecure, function(req, res, next) {
+router.post('/local/login', function(req, res, next) {
     passport.authenticate('local', function(err, user) {
         if (err)
             return next(err);
-        if (!user)
+        if (!user) {
             return res.status(401).send({
                 message: '로그인 실패'
             });
+        }
 
         req.login(user, function(err) { // req.user를 만들어 준다.
             if (err)
@@ -95,11 +58,61 @@ router.get('/local/logout', function(req, res, next) {
     });
 });
 
-/* 페이스북 로그인 */
+// 페이스북 로그인 (토큰 얻기)
+passport.use(new FacebookStrategy({
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+        profileFields: ['id', 'displayName', 'name', 'emails', 'gender', 'profileUrl', 'photos']
+    },
+    function(accessToken, refreshToken, profile, done) {
+        console.log(accessToken);
+        User.FB_findOrCreate(profile, function (err, user) {
+            if (err) {
+                return done(err);
+            }
+            return done(null, user);
+        });
+    }
+));
+
+// 페이스북 로그인
+passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+    }, function(accessToken, refreshToken, profile, done) {
+        User.FB_findOrCreate(profile, function (err, user) {
+            if (err) {
+                return done(err);
+            }
+            return done(null, user);
+        });
+    }
+));
+
+router.get('/logout', function(req, res, next) {
+    req.logout();
+    res.send({
+        message: '페이스북 로그아웃'
+    });
+});
+
+passport.serializeUser(function(user, done) {
+    done(null, user);
+});
+passport.deserializeUser(function(user, done) {
+    done(null, user);
+});
+
+
+
+
+
 router.get('/facebook', passport.authenticate('facebook', {scope: ['email']}));
 router.get('/facebook/callback', passport.authenticate('facebook'), function(req, res, next) { // Ok 하면, call URL 필요
     res.send({ message: 'facebook callback' });
 });
+/* 페이스북 로그인 */
 router.post('/facebook/token', passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
     res.send(req.user? '성공' : '실패');
 }); // access_token : 받은 토큰 값 (post)

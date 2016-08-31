@@ -1,0 +1,63 @@
+var express = require('express');
+var router = express.Router();
+var Menu = require('../models/menu');
+
+/* 메뉴 생성 */
+router.post('/', function(req, res, next) {
+    var message = '쿠커 메뉴 생성 완료';
+    var data = {};
+    data.id = req.user.id;
+    data.name = req.body.name;
+    data.image = req.body.image;
+    data.price = req.body.price;
+    data.introduce = req.body.introduce;
+    data.currency = req.body.currency;
+    data.activation = req.body.activation;
+
+    Menu.createMenu(data, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message,
+            result: result
+        });
+    });
+});
+/* 메뉴 수정 */
+router.put('/:id', function(req, res, next) {
+    var message = '쿠커 메뉴 수정 완료';
+    var data = {};
+    data.id = req.params.id;
+    data.name = req.body.name;
+    data.image = req.body.image;
+    data.price = req.body.price;
+    data.introduce = req.body.introduce;
+    data.currency = req.body.currency;
+    data.activation = req.body.activation;
+    Menu.updateMenu(data, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message,
+            result: result
+        });
+    });
+});
+/* 메뉴 삭제 */
+router.delete('/:id', function(req, res, next) {
+    var message = '쿠커 메뉴 삭제 완료';
+    var data = {};
+    data.id = req.params.id;
+    Menu.deleteMenu(data, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message
+        });
+    });
+});
+
+module.exports = router;

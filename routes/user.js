@@ -4,8 +4,8 @@ var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
 
-/* (HTTPS) 회원 정보 생성 */
-router.post('/', isSecure, function(req, res, next) {
+/* 로컬 정보 생성
+router.post('/', function(req, res, next) {
     var message = '회원 정보 생성 완료';
     var data = {};
 
@@ -14,7 +14,7 @@ router.post('/', isSecure, function(req, res, next) {
     newCustomer.password = req.body.password;
     newCustomer.name = req.body.name;
 
-    User.registerCustomer(newCustomer, function(err, customer) {
+    User.registerUser(newCustomer, function(err, customer) {
         if (err) {
             return next(err);
         }
@@ -25,40 +25,61 @@ router.post('/', isSecure, function(req, res, next) {
         });
     })
 });
-/* (HTTPS) 회원 정보 조회 */
-router.get('/:id', function(req, res, next) {
-    var message = '회원 정보 조회 완료';
-    var result = {};
-    result.grade = 5;
-    result.menus = [{
-        'image': '이미지',
-        'name': '비빔밥',
-        'price': 7000,
-        'introduce': '전주 대표 음식',
-        'activation': true
-    }];
-    result.location = {
-        'address': '서울시 관악구 낙성대 서울대 연구공원',
-        'latitude': 34.123,
-        'longitude': 37.123
-    };
-    result.accumulation = 10;
-    res.send({
-        'message': message,
-        'reuslt': result
+ */
+
+/* 회원 정보 생성 */
+router.post('/', isAuthenticated, function(req, res, next) {
+    var message = '회원 정보 생성 완료';
+    var newUser = {};
+
+    newUser.id = req.user.id;
+    newUser.facebook_id = req.user.facebook_id;
+    newUser.image = req.body.image;
+    newUser.gender = req.body.gender;
+    newUser.birth = req.body.birth;
+    newUser.country = req.body.country;
+    newUser.phone = req.body.phone;
+    newUser.introduce = req.body.introduce;
+    newUser.type = req.body.type;
+    User.registerUser(newUser, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message,
+            result: result
+        });
     });
 });
-/* (HTTPS) 회원 탈퇴 */
+/* 회원 정보 조회 */
+router.get('/:id', function(req, res, next) {
+    var message = '회원 정보 조회 완료';
+    var showUser = {};
+    showUser.id = req.params.id;
+
+    User.showUser(showUser, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message,
+            result: results
+        });
+    });
+});
+/* 회원 정보 삭제 (보류) */
 router.delete('/me', function(req, res, next) {
-    if (req.url.match(/\?type=\w+/i)) {
-        var message = '회원 탈퇴 완료';
-    }
-    /* 쿠커 일정 삭제 */
-    if (req.url.match(/\?type=cooker\/schedules\/:id/i)) {
-        var message = '쿠커 일정 삭제 완료';
-    }
-    res.send({
-        'message': message
+    var message = '회원 탈퇴 완료';
+    var deleteUser = {};
+    deleteUser.id = req.user.id;
+    User.deleteUser(deleteUser, function(err, result) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            message: message,
+            result: result
+        });
     });
 });
 

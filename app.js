@@ -19,6 +19,9 @@ var eater = require('./routes/eater');
 var notice = require('./routes/notice');
 var reservation = require('./routes/reservation');
 var review = require('./routes/review');
+var menu = require('./routes/menu');
+var schedule = require('./routes/schedule');
+var bookmark = require('./routes/bookmark');
 
 var app = express();
 
@@ -55,6 +58,9 @@ app.use('/chattings', chatting);
 app.use('/notices', notice);
 app.use('/reservations', reservation);
 app.use('/reviews', review);
+app.use('/menus', menu);
+app.use('/schedules', schedule);
+app.use('/bookmarks', bookmark);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
