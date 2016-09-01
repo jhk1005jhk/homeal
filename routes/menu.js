@@ -7,8 +7,7 @@ var path = require('path');
 /* 메뉴 생성 */
 router.post('/', function(req, res, next) {
     var form = new formidable.IncomingForm();
-    // __dirname 프로젝트 수행하는 경로
-    form.uploadDir = path.join(__dirname, '../uploads/images/menus');
+    form.uploadDir = path.join(__dirname, '../uploads/images/menus'); // __dirname 프로젝트 수행하는 경로
     form.keepExtensions = true;
 
     form.parse(req, function(err, fields, files) {

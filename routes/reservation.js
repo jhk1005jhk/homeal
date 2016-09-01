@@ -8,6 +8,7 @@ router.post('/', function(req, res, next) {
         'message': message
     });
 });
+
 /* 예약 목록 조회 */
 router.get('/', function(req, res, next) {
     if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
@@ -21,6 +22,7 @@ router.get('/', function(req, res, next) {
         });
     }
 });
+
 /* 예약 승인(1)/거절(2)/취소(3,4) */
 router.put('/', function(req, res, next) {
     var message = '예약 승인/거절/취 완료';

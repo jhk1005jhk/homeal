@@ -3,8 +3,6 @@ var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
-var formidable = require('formidable');
-var path = require('path');
 
 /* 로컬 정보 생성
 router.post('/', function(req, res, next) {

@@ -24,6 +24,7 @@ passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'passwor
         });
     });
 }));
+
 /* 로컬 로그인 */
 router.post('/local/login', function(req, res, next) {
     passport.authenticate('local', function(err, user) {
@@ -50,6 +51,7 @@ router.post('/local/login', function(req, res, next) {
         'user': user
     });
 });
+
 /* 로컬 로그아웃 */
 router.get('/local/logout', function(req, res, next) {
     req.logout();

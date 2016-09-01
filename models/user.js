@@ -391,7 +391,7 @@ function FB_findOrCreate(profile, callback) {
                 user.facebook_id = profile.id;
                 callback(null, user);
             });
-        })
+        });
     });
 }
 

@@ -4,8 +4,7 @@ var dbPoolConfig = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     connectionLimit: 5,
-    debug: false,
-    acquireTimeout: 30000
+    debug: false
 };
 
 module.exports = dbPoolConfig;

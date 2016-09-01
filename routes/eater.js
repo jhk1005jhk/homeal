@@ -17,6 +17,7 @@ router.get('/me', function (req, res, next) {
         });
     });
 });
+
 /* 잇터 정보 수정 */
 router.put('/me', function (req, res, next) {
     var message = '잇터 개인정보 수정 완료';

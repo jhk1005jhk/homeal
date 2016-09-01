@@ -1,6 +1,6 @@
 var dbPool = require('../models/common').dbPool;
 
-/* 잇터 정보 조회(1) */
+/* 잇터 정보 조회 */
 function showEaterInfo(data, callback) {
     var sql = 'select * ' +
         'from user u join eater e on (u.id = e.user_id) ' +

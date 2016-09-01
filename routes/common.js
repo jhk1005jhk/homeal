@@ -6,7 +6,6 @@ function isAuthenticated(req, res, next) {
     }
     next();
 }
-
 function isSecure(req, res, next) {
     if (!req.secure) {
         return res.status(426).send({

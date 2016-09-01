@@ -21,6 +21,7 @@ router.post('/', function(req, res, next) {
         });
     });
 });
+
 /* 일정 삭제 */
 router.delete('/:id', function(req, res, next) {
     var message = '일정 삭제 완료';

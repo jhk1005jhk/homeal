@@ -43,7 +43,6 @@ router.get('/', function(req, res, next) {
         };
         result.pageNo = pageNo;
         result.rowCount = rowCount;
-
         res.send({
             'message': message,
             'result': result

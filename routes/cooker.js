@@ -77,7 +77,6 @@ router.get('/', function(req, res, next) {
                 result: results
             });
         });
-
     /* 쿠커 섬네일 페이지 목록 조회 */
     } else if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
         var message = "쿠커 페이지 목록 조회 완료";

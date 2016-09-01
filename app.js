@@ -10,7 +10,7 @@ var redis = require('redis'); // redis 사용
 var redisClient = redis.createClient(); // 클라이언트 만들기
 var RedisStore = require('connect-redis')(session); // 레디스 스토어 만들기
 
-// 모듈 로딩 **
+/* 모듈 로딩 */
 var auth = require('./routes/auth');
 var chatting = require('./routes/chatting');
 var user = require('./routes/user');
@@ -52,7 +52,7 @@ app.use('/menus', express.static(path.join(__dirname, 'uploads/images/menus')));
 app.use('/thumbnails', express.static(path.join(__dirname, 'uploads/images/thumbnails'))); // 섬네일 이미지 경로 맵핑
 app.use('/users', express.static(path.join(__dirname, 'uploads/images/users'))); // 사용자 이미지 경로 맵핑
 
-// 마운트 포인트 맵핑 **
+/* 마운트 포인트 맵핑 */
 app.use('/auth', auth);
 app.use('/users', user);
 app.use('/cookers', cooker);

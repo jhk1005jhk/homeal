@@ -3,7 +3,7 @@ var dbPool = require('../models/common').dbPool;
 /* 메뉴 생성 */
 function createMenu(data, callback) {
     var sql = 'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
-              'values (?, ?, ?, ?, ?, ?, ?)';
+               'values (?, ?, ?, ?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -20,8 +20,8 @@ function createMenu(data, callback) {
 /* 메뉴 수정 */
 function updateMenu(data, callback) {
     var sql = 'update menu ' +
-        'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
-        'where id = ?';
+               'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
+               'where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {

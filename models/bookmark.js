@@ -1,5 +1,5 @@
 var dbPool = require('../models/common').dbPool;
-var async = require('async');
+
 /* 찜 생성 */
 function createBookmark(data, callback) {
     var sql = 'insert into bookmark (eater_user_id, cooker_user_id) ' +

@@ -17,6 +17,7 @@ router.post('/', function(req, res, next) {
         });
     });
 });
+
 /* 잇터 찜 조회 */
 router.get('/', function(req, res, next) {
     var message = "잇터 찜 조회 완료";

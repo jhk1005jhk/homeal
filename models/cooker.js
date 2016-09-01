@@ -252,8 +252,8 @@ function searchCookerStore(data, callback) {
             });
             dbConn.release();
             callback(null, results);
-        })
-    })
+        });
+    });
 }
 module.exports.showCookerInfo = showCookerInfo;
 module.exports.updateCookerInfo = updateCookerInfo;

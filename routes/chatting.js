@@ -35,7 +35,6 @@ router.get('/', function(req, res, next) {
             'eater_id': 2,
             'cooker_id': 2
         });
-
         res.send({
             'message': message,
             'result': result,

@@ -10,6 +10,7 @@ router.post('/', function(req, res, next) {
 });
 
 /* 후기를.. 옮겨야 함 잇터/쿠커로 */
+
 /* 후기 조회 */
 router.get('/:id', function(req, res, next) {
     var id = req.params.id;
