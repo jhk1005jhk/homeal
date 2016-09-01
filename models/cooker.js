@@ -4,7 +4,7 @@ var path = require('path');
 var url = require('url');
 var fs = require('fs');
 
-/* 쿠커 정보 조회(1) */
+/* 쿠커 정보 조회(1) - 페이스북 사진인지 판단 */
 function showCookerInfo(data, callback) {
     var sql = 'select * ' +
               'from user u join cooker c on (u.id = c.user_id) ' +
@@ -63,12 +63,15 @@ function updateCookerInfo(data, callback) {
                     if (err) {
                         return callback(err);
                     }
-                    // 페이스북 처리 안해서 에러남
-                    fs.unlink(results[0].image, function(err) {
-                        if (err) {
-                            return callback(err);
-                        }
-                    });
+                    var filename = path.basename(results[0].image); // 사진이름
+                    // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
+                    if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단, 페북 사진 아니면 실행
+                        fs.unlink(results[0].image, function (err) {
+                            if (err) {
+                                return callback(err);
+                            }
+                        });
+                    }
                     callback(null);
                 });
             }

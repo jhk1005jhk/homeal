@@ -60,13 +60,12 @@ router.put('/:id', function(req, res, next) {
         data.introduce = fields.introduce;
         data.currency = parseInt(fields.currency, 10);
         data.activation = parseInt(fields.activation, 10);
-        Menu.updateMenu(data, function(err, result) {
+        Menu.updateMenu(data, function(err) {
             if (err) {
                 return next(err);
             }
             res.send({
-                message: message,
-                result: result
+                message: message
             });
         });
      });

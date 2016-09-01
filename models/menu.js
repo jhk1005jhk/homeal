@@ -44,7 +44,7 @@ function updateMenu(data, callback) {
                     });
                 }
                 dbConn.commit(function() {
-                    callback(null, data);
+                    callback(null);
                 });
             });
             /* 사진 삭제 */
@@ -53,7 +53,7 @@ function updateMenu(data, callback) {
                     if (err) {
                         return callback(err);
                     }
-                    console.log('삭제할 사진: ' + results[0].image);
+                    // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
                     fs.unlink(results[0].image, function(err) {
                         if (err) {
                             return callback(err);
