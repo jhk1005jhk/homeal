@@ -6,6 +6,8 @@ var DummyUser = {
 
 var dbPool = require('../models/common').dbPool;
 var async = require('async')
+var path = require('path');
+var url = require('url');
 
 /* 로컬 관련 기능 */
 function findByEmail(email, callback) {
@@ -212,7 +214,6 @@ function showUser(showUser, callback) {
             if (err) {
                 console.log(err);
             } else {
-                console.log(results);
                 callback(null, results)
             }
         });
@@ -227,11 +228,15 @@ function showUser(showUser, callback) {
         }
 
         function selectUser(type, callback) {
+
             if (type === 'cooker') {
                 dbConn.query(sql_findCooker, [showUser.id], function(err, results) {
                     if (err) {
                         return console.log(err);
                     }
+                    var filename = path.basename(results[0].image); // 사진이름
+                    //results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
+                    results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
                     callback(null, results);
                 });
             } else if (type === 'eater') {
@@ -239,6 +244,9 @@ function showUser(showUser, callback) {
                     if (err) {
                         return console.log(err);
                     }
+                    var filename = path.basename(results[0].image); // 사진이름
+                    //results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
+                    results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
                     callback(null, results);
                 });
             }
@@ -352,7 +360,6 @@ function FB_findOrCreate(profile, callback) {
     var sql_create_facebookid = 'insert into user(email, image, name, facebook_id) ' +
                                 'values(?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
-        console.log(profile.photos[0].value);
         if (err)
             return callback(err);
         // homealdb에 facebook_id(profile.id)가 있는지 확인

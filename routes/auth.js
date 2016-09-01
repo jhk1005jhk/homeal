@@ -93,7 +93,7 @@ passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
 router.get('/logout', function(req, res, next) {
     req.logout();
     res.send({
-        message: '페이스북 로그아웃'
+        message: '로그아웃 완료'
     });
 });
 

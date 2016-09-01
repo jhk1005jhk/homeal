@@ -60,13 +60,12 @@ router.get('/:id', function(req, res, next) {
 /* 쿠커 섬네일 검색 & 목록 조회 */
 router.get('/', function(req, res, next) {
     /* 쿠커 섬네일 페이지 검색 */
-    ///\?name=\w*&address=\w*&date=\w*&minp=\w*&maxp=\w*&pageNo=\d+&rowCount=\d+/i)
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
         var message = "쿠커 검색 완료";
-        var pageNo = req.query.pageNo;
-        var rowCount = req.query.rowCount;
         var data = {};
         data.keyword = req.query.keyword;
+        data.pageNo = req.query.pageNo;
+        data.rowCount = req.query.rowCount;
         Cooker.searchCookerStore(data, function(err, results) {
             if (err) {
                 return next(err);
@@ -82,9 +81,11 @@ router.get('/', function(req, res, next) {
     /* 쿠커 섬네일 페이지 목록 조회 */
     } else if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
         var message = "쿠커 페이지 목록 조회 완료";
-        var pageNo = req.query.pageNo;
-        var rowCount = req.query.rowCount;
-        Cooker.showCookerStoreList(null, function(err, results) {
+        data = {};
+        data.pageNo = req.query.pageNo;
+        data.rowCount = req.query.rowCount;
+
+        Cooker.showCookerStoreList(data, function(err, results) {
             if (err) {
                 return next(err);
             }

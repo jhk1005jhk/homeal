@@ -43,11 +43,14 @@ app.use(session({
     client: redisClient
   }),
   resave: true, // 변경된게 없으면 세션을 저장하지 말아라
-  saveUninitialized: false // 저장된게 없으면 세션을 말아라
+  saveUninitialized: true // 저장된게 없으면 세션을 저장
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/menus', express.static(path.join(__dirname, 'uploads/images/menus'))); // 메뉴 이미지 경로 맵핑
+app.use('/thumbnails', express.static(path.join(__dirname, 'uploads/images/thumbnails'))); // 섬네일 이미지 경로 맵핑
+app.use('/users', express.static(path.join(__dirname, 'uploads/images/users'))); // 사용자 이미지 경로 맵핑
 
 // 마운트 포인트 맵핑 **
 app.use('/auth', auth);
