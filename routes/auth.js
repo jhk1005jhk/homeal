@@ -6,7 +6,7 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var FacebookTokenStrategy = require('passport-facebook-token');
 var User = require('../models/user');
 var isSecure = require('./common').isSecure;
-
+var isAuthenticated = require('./common').isAuthenticated;
 // 로컬 로그인
 passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },
     function(email, password, done) {
@@ -51,7 +51,7 @@ router.post('/local/login', function(req, res, next) {
     });
 });
 /* 로컬 로그아웃 */
-router.get('/local/logout', function(req, res, next) {
+router.get('/local/logout', isSecure, isAuthenticated, function(req, res, next) {
     req.logout();
     res.send({
         message: 'local logout'
@@ -104,7 +104,7 @@ router.get('/facebook/callback', passport.authenticate('facebook'), function(req
     res.send({ message: 'facebook callback' });
 });
 /* 페이스북 로그인 (access_token 매개변수로 넘겨줘야 함) */
-router.post('/facebook/token', passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
+router.post('/facebook/token', isSecure, passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
     res.send(req.user? '성공' : '실패');
 });
 /* 페이스북 로그아웃 */

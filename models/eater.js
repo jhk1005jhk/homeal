@@ -9,18 +9,25 @@ function showEaterInfo(data, callback) {
     var sql = 'select * ' +
         'from user u join eater e on (u.id = e.user_id) ' +
         'where id = ?';
+    console.log('데이타: ' + data);
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
+
+            console.log(results);
             var filename = path.basename(results[0].image); // 사진이름
-            results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-            // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
-            dbConn.release();
+            if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                /* EC2 Image URL */
+                results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
+                /* Local Image URL */
+                // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+            };
             callback(null, results);
         });
     });

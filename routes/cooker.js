@@ -3,9 +3,11 @@ var router = express.Router();
 var Cooker = require('../models/cooker');
 var formidable = require('formidable');
 var path = require('path');
+var isSecure = require('./common').isSecure;
+var isAuthenticated = require('./common').isAuthenticated;
 
 /* 쿠커 정보 조회 */
-router.get('/me', function(req, res, next) {
+router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     var message = '쿠커 나의 정보 조회 완료';
     var data = {};
     data.id = req.user.id;
@@ -20,7 +22,7 @@ router.get('/me', function(req, res, next) {
     });
 });
 /* 쿠커 정보 수정 */
-router.put('/me', function(req, res, next) {
+router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/users');
     form.keepExtensions = true;
@@ -83,8 +85,6 @@ router.get('/', function(req, res, next) {
             }
             res.send({
                 message: message,
-                pageNo: pageNo,
-                rowCount: rowCount,
                 result: results
             });
         });

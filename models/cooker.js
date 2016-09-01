@@ -63,6 +63,7 @@ function updateCookerInfo(data, callback) {
                     if (err) {
                         return callback(err);
                     }
+                    // 페이스북 처리 안해서 에러남
                     fs.unlink(results[0].image, function(err) {
                         if (err) {
                             return callback(err);

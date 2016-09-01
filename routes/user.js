@@ -28,7 +28,7 @@ router.post('/', function(req, res, next) {
  */
 
 /* 회원 정보 생성 */
-router.post('/', function(req, res, next) {
+router.post('/', isSecure, isAuthenticated, function(req, res, next) {
     var message = '회원 정보 생성 완료';
     var newUser = {};
 
@@ -51,7 +51,7 @@ router.post('/', function(req, res, next) {
     });
 });
 /* 회원 정보 조회 */
-router.get('/:id', isAuthenticated, function(req, res, next) {
+router.get('/:id', isSecure, isAuthenticated, function(req, res, next) {
     var message = '회원 정보 조회 완료';
     var showUser = {};
     showUser.id = req.params.id;

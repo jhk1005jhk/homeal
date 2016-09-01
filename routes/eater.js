@@ -3,9 +3,11 @@ var router = express.Router();
 var Eater = require('../models/eater');
 var formidable = require('formidable');
 var path = require('path');
+var isSecure = require('./common').isSecure;
+var isAuthenticated = require('./common').isAuthenticated;
 
 /* 잇터 정보 조회 */
-router.get('/me', function (req, res, next) {
+router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
     var message = '잇터 개인정보 조회 완료';
     var data = {};
     data.id = req.user.id;
@@ -21,7 +23,7 @@ router.get('/me', function (req, res, next) {
 });
 
 /* 잇터 정보 수정 */
-router.put('/me', function (req, res, next) {
+router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/users');
     form.keepExtensions = true;
