@@ -165,7 +165,6 @@ function registerUser(newUser, callback) {
                });
            }
         });
-
         function registerUser(callback) {
             dbConn.query(sql_registerUser,
                 [newUser.gender, newUser.birth, newUser.country,
@@ -176,7 +175,6 @@ function registerUser(newUser, callback) {
                     callback(null);
                 });
         }
-
         function registerCooker(callback) {
             dbConn.query(sql_registerCooker, [newUser.id], function(err, result) {
                 if (err) {
@@ -185,7 +183,6 @@ function registerUser(newUser, callback) {
                 callback(null);
             });
         }
-
         function registerEater(callback) {
             dbConn.query(sql_registerEater, [newUser.id], function(err, result) {
                 if (err) {
@@ -228,15 +225,16 @@ function showUser(showUser, callback) {
         }
 
         function selectUser(type, callback) {
-
             if (type === 'cooker') {
                 dbConn.query(sql_findCooker, [showUser.id], function(err, results) {
                     if (err) {
                         return console.log(err);
                     }
                     var filename = path.basename(results[0].image); // 사진이름
-                    //results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                    results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                    /* EC2 Image URL */
+                    results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
+                    /* Local Image URL */
+                    // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
                     callback(null, results);
                 });
             } else if (type === 'eater') {
@@ -245,8 +243,10 @@ function showUser(showUser, callback) {
                         return console.log(err);
                     }
                     var filename = path.basename(results[0].image); // 사진이름
-                    //results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                    results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                    /* EC2 Image URL */
+                    results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
+                    /* Local Image URL */
+                    // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
                     callback(null, results);
                 });
             }

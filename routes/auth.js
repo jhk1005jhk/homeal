@@ -24,7 +24,6 @@ passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'passwor
         });
     });
 }));
-
 /* 로컬 로그인 */
 router.post('/local/login', function(req, res, next) {
     passport.authenticate('local', function(err, user) {
@@ -51,7 +50,6 @@ router.post('/local/login', function(req, res, next) {
         'user': user
     });
 });
-
 /* 로컬 로그아웃 */
 router.get('/local/logout', function(req, res, next) {
     req.logout();
@@ -59,6 +57,8 @@ router.get('/local/logout', function(req, res, next) {
         message: 'local logout'
     });
 });
+
+
 
 // 페이스북 로그인 (토큰 얻기)
 passport.use(new FacebookStrategy({
@@ -77,8 +77,7 @@ passport.use(new FacebookStrategy({
         });
     }
 ));
-
-// 페이스북 로그인
+// 페이스북 로그인 (로그인 성공 여부)
 passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
@@ -91,32 +90,29 @@ passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
         });
     }
 ));
-
+/* 레디스 세션에 저장 */
+passport.serializeUser(function(user, done) {
+    done(null, user);
+});
+/* 레디스 세션에서 불러오기 */
+passport.deserializeUser(function(user, done) {
+    done(null, user);
+});
+/* access_token 받아오는 URL */
+router.get('/facebook', passport.authenticate('facebook', {scope: ['email']}));
+router.get('/facebook/callback', passport.authenticate('facebook'), function(req, res, next) { // Ok 하면, call URL 필요
+    res.send({ message: 'facebook callback' });
+});
+/* 페이스북 로그인 (access_token 매개변수로 넘겨줘야 함) */
+router.post('/facebook/token', passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
+    res.send(req.user? '성공' : '실패');
+});
+/* 페이스북 로그아웃 */
 router.get('/logout', function(req, res, next) {
     req.logout();
     res.send({
         message: '로그아웃 완료'
     });
 });
-
-passport.serializeUser(function(user, done) {
-    done(null, user);
-});
-passport.deserializeUser(function(user, done) {
-    done(null, user);
-});
-
-
-
-
-
-router.get('/facebook', passport.authenticate('facebook', {scope: ['email']}));
-router.get('/facebook/callback', passport.authenticate('facebook'), function(req, res, next) { // Ok 하면, call URL 필요
-    res.send({ message: 'facebook callback' });
-});
-/* 페이스북 로그인 */
-router.post('/facebook/token', passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
-    res.send(req.user? '성공' : '실패');
-}); // access_token : 받은 토큰 값 (post)
 
 module.exports = router;

@@ -8,7 +8,7 @@ router.post('/', function(req, res, next) {
     var data = {};
     data.id = req.user.id;
     data.date = req.body.date;
-    data.people = req.body.people;
+    data.pax = req.body.pax;
     data.sharing = req.body.sharing;
 
     Schedule.createSchedule(data, function(err, result) {
