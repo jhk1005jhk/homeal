@@ -8,12 +8,12 @@ function createSchedule(data, callback) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql, [data.id, data.date, data.pax, data.sharing],
-            function(err, result) {
+        dbConn.query(sql, [data.id, data.date, data.pax, data.sharing], function(err, result) {
+            dbConn.release();
             if (err) {
-                return console.log(err);
+                return callback(err);
             }
-            callback(null, result);
+            callback(null);
         });
     });
 }
@@ -25,8 +25,9 @@ function deleteSchedule(data, callback) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, result) {
+            dbConn.release();
             if (err) {
-                return console.log(err);
+                return callback(err);
             }
             callback(null, result);
         });

@@ -4,29 +4,6 @@ var isAuthenticated = require('./common').isAuthenticated;
 var isSecure = require('./common').isSecure;
 var User = require('../models/user');
 
-/* 로컬 정보 생성
-router.post('/', function(req, res, next) {
-    var message = '회원 정보 생성 완료';
-    var data = {};
-
-    var newCustomer = {};
-    newCustomer.email = req.body.email;
-    newCustomer.password = req.body.password;
-    newCustomer.name = req.body.name;
-
-    User.registerUser(newCustomer, function(err, customer) {
-        if (err) {
-            return next(err);
-        }
-        data.result = customer;
-        res.send({
-            message: message,
-            data: data
-        });
-    })
-});
- */
-
 /* 회원 정보 생성 */
 router.post('/', isSecure, isAuthenticated, function(req, res, next) {
     var message = '회원 정보 생성 완료';
@@ -45,6 +22,7 @@ router.post('/', isSecure, isAuthenticated, function(req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             result: result
         });
@@ -67,7 +45,7 @@ router.get('/:id', isSecure, isAuthenticated, function(req, res, next) {
     });
 });
 /* 회원 정보 삭제 (보류) */
-router.delete('/me', function(req, res, next) {
+router.delete('/me', isAuthenticated, function(req, res, next) {
     var message = '회원 탈퇴 완료';
     var deleteUser = {};
     deleteUser.id = req.user.id;
@@ -76,6 +54,7 @@ router.delete('/me', function(req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             result: result
         });

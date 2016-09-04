@@ -8,7 +8,7 @@ var isAuthenticated = require('./common').isAuthenticated;
 
 /* 잇터 정보 조회 */
 router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
-    var message = '잇터 개인정보 조회 완료';
+    var message = '잇터 내 정보 조회 완료';
     var data = {};
     data.id = req.user.id;
     Eater.showEaterInfo(data, function(err, result) {
@@ -16,6 +16,7 @@ router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             result: result
         });
@@ -47,6 +48,7 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
                 return next(err);
             }
             res.send({
+                code: 1,
                 message: message
             });
         });

@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
+var isAuthenticated = require('./common').isAuthenticated;
 
 /* 채팅 메시지 송신 */
-router.post('/', function(req, res, next) {
+router.post('/', isAuthenticated, function(req, res, next) {
     var message = '메시지 전송 성공';
     var result = {};
     result.id = req.body.id;
@@ -11,12 +12,13 @@ router.post('/', function(req, res, next) {
     result.read = req.body.read;
     result.registrationToken = req.body.registrationToken;
     res.send({
-        'message': message,
-        'result': result
+        code: 1,
+        message: message,
+        result: result
     });
 });
 /* 채팅 목록 조회 */
-router.get('/', function(req, res, next) {
+router.get('/', isAuthenticated, function(req, res, next) {
     var message = '채팅 목록 조회 완료';
     if (req.url.match(/\/\?pageNo=\d+&rowCount=\d+/i)) {
         var pageNo = parseInt(req.query.pageNo, 10);
@@ -36,9 +38,10 @@ router.get('/', function(req, res, next) {
             'cooker_id': 2
         });
         res.send({
-            'message': message,
-            'result': result,
-            'list': list
+            code: 1,
+            message: message,
+            result: result,
+            list: list
         });
     }
 });

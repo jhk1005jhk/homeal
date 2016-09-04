@@ -7,15 +7,16 @@ var fs = require('fs');
 /* 메뉴 생성 */
 function createMenu(data, callback) {
     var sql = 'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
-               'values (?, ?, ?, ?, ?, ?, ?)';
+              'values (?, ?, ?, ?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
         dbConn.query(sql, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation],
             function(err, result) {
+                dbConn.release();
                 if (err) {
-                    return console.log(err);
+                    return callback(err);
                 }
                 callback(null);
             });

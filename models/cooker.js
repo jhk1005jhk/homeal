@@ -4,11 +4,12 @@ var path = require('path');
 var url = require('url');
 var fs = require('fs');
 
-/* 쿠커 정보 조회(1) - 페이스북 사진인지 판단 */
+/* 쿠커 정보 조회 - 페이스북 사진인지 판단 */
 function showCookerInfo(data, callback) {
     var sql = 'select * ' +
               'from user u join cooker c on (u.id = c.user_id) ' +
               'where id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -20,12 +21,15 @@ function showCookerInfo(data, callback) {
             }
             var filename = path.basename(results[0].image); // 사진이름
             if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
-                /* EC2 Image URL */
-                results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                /* Local Image URL */
-                // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
             };
-            callback(null, results);
+
+            var data = {};
+            data.image = results[0].image;
+            data.name = results[0].name;
+            data.type = results[0].type;
+            data.grade = results[0].grade;
+            callback(null, data);
         });
     });
 }
@@ -33,17 +37,19 @@ function showCookerInfo(data, callback) {
 function updateCookerInfo(data, callback) {
     var sql_selectDeleteFilePath = 'select image from user where id = ?'; // 지울 사진 경로
     var sql_updateUserInfo = 'update user ' +
-        'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
-        'where id = ?';
+                             'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
+                             'where id = ?';
     var sql_updateCookerInfo = 'update cooker ' +
                                'set address = ? ' +
                                'where user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
             async.series([deleteFile, updateUserInfo, updateCookerInfo], function(err) {
@@ -102,9 +108,11 @@ function updateCookerInfo(data, callback) {
 function showCookerStore(data, callback) {
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.parallel([showCookerInfo, showCookerMenu, showCookerSchedule], function (err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             } else {
@@ -115,21 +123,34 @@ function showCookerStore(data, callback) {
     /* 쿠커 정보 조회 */
     function showCookerInfo(callback) {
         var sql = 'select * ' +
-            'from user u join cooker c on (u.id = c.user_id) ' +
-            'where id = ?';
+                  'from user u join cooker c on (u.id = c.user_id) '  +
+                  'join cooker_review cr on (u.id = cooker_user_id) ' +
+                  'where id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
             dbConn.query(sql, [data.id], function(err, results) {
+                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
                 var filename = path.basename(results[0].image); // 사진이름
-                results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                //results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
-                dbConn.release();
-                callback(null, results);
+                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                var data = {};
+                data.thumbnail = ['http://testUrl1.com','http://testUrl2.com','http://testUrl3.com'];
+                data.image = results[0].image;
+                data.name = results[0].name;
+                data.address = results[0].address;
+                data.longitude = results[0].longitude;
+                data.latitude = results[0].latitude;
+                data.grade = results[0].grade;
+                data.taste = results[0].taste;
+                data.cleanliness = results[0].cleanliness;
+                data.kindness = results[0].kindness;
+                data.review = results[0].review;
+                callback(null, data);
             });
         });
     }
@@ -138,19 +159,28 @@ function showCookerStore(data, callback) {
         var sql = 'select * from menu where cooker_user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
             dbConn.query(sql, [data.id], function(err, results) {
+                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
                 async.each(results, function(item, done) {
                     var filename = path.basename(item.image); // 사진이름
-                    item.image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/menus/' + filename);
-                    //item.image = url.resolve('http://localhost:' + process.env.PORT, '/menus/' + filename);
+                   item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                     done(null);
                 });
-                callback(null, results);
+                var data = {};
+                data.id = results[0].id;
+                data.name = results[0].name;
+                data.image = results[0].image;
+                data.price = results[0].price;
+                data.introduce = results[0].introduce;
+                data.currency = results[0].currency;
+                data.activation = results[0].activation;
+                callback(null, data);
             });
         });
     }
@@ -159,23 +189,27 @@ function showCookerStore(data, callback) {
         var sql = 'select * from schedule where cooker_user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
             dbConn.query(sql, [data.id], function(err, results) {
+                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
-                dbConn.release();
-                callback(null, results);
+                var data = {};
+                data.schedules = results;
+                callback(null, data);
             });
         });
     }
 }
-/* 쿠커 메뉴 목록 조회(2) */
+/* 쿠커 메뉴 목록 조회 */
 function showCookerMenu(data, callback) {
     var sql = 'select * from menu where cooker_user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
@@ -185,46 +219,45 @@ function showCookerMenu(data, callback) {
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
-                //item.image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/menus/' + filename);
-                item.image = url.resolve('http://localhost:' + process.env.PORT, '/menus/' + filename);
+               item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                 done(null);
             });
-            // menu.id = results[0].id;
-            // menu.cooker_user_id = results[0].cooker_user_id;
-            // menu.name = results[0].name;
-            // var filename = path.basename(results[0].image); // 사진이름
-            // results.image = url.resolve('http://localhost:' + process.env.PORT, '/menus/' + filename);
-            // menu.price = results[0].price;
-            // menu.introduce = results[0].introduce;
-            // menu.currency = results[0].currency;
-            // menu.activation = results[0].activation;
+            var data = {};
+            data.id = results[0].id;
+            data.name = results[0].name;
+            data.image = results[0].image;
+            data.price = results[0].price;
+            data.introduce = results[0].introduce;
+            data.currency = results[0].currency;
+            data.activation = results[0].activation;
             callback(null, results);
         });
     });
 }
-/* 쿠커 일정 목록 조회(3) */
+/* 쿠커 일정 목록 조회 */
 function showCookerSchedule(data, callback) {
     var sql = 'select * from schedule where cooker_user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
-            dbConn.release();
             callback(null, results);
         });
     });
 }
-/* 쿠커 섬네일 페이지 목록 조회 */
+/* 쿠커 섬네일 목록 조회 */
 function showCookerStoreList(data, callback) {
     var sql = 'select * ' +
-        'from user u join cooker c on (u.id = c.user_id) ' +
-        'join image i on (u.id = i.cooker_user_id) ' +
-        'group by u.id ' +
-        'limit ?, ?';
+              'from user u join cooker c on (u.id = c.user_id) ' +
+              'join image i on (u.id = i.cooker_user_id) ' +
+              'group by u.id ' +
+              'limit ?, ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -233,16 +266,23 @@ function showCookerStoreList(data, callback) {
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
         dbConn.query(sql, [data.pageNo, data.rowCount], function(err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
-                item.image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                //item.image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
                 done(null);
             });
-            dbConn.release();
+            // data.id = results[0].id;
+            // data.image = results[0].image;
+            // data.name = results[0].name;
+            // data.address = results[0].address;
+            // data.thumbnail = 'http://url.test';
+            // data.grade = '1';
+            // data.bookmarkCnt = '5';
+            // data.reviewCnt = '5';
             callback(null, results);
         });
     });
@@ -250,11 +290,11 @@ function showCookerStoreList(data, callback) {
 /* 쿠커 섬네일 페이지 검색 */
 function searchCookerStore(data, callback) {
     var sql = 'select * ' +
-        'from user u join cooker c on (u.id = c.user_id) ' +
-        'join image i on (u.id = i.cooker_user_id) ' +
-        'where name like ? or address like ? ' +
-        'group by u.id ' +
-        'limit ?, ?';
+              'from user u join cooker c on (u.id = c.user_id) ' +
+              'join image i on (u.id = i.cooker_user_id) ' +
+              'where name like ? or address like ? ' +
+              'group by u.id ' +
+              'limit ?, ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -264,17 +304,18 @@ function searchCookerStore(data, callback) {
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
         dbConn.query(sql, [data.keyword, data.keyword, data.pageNo, data.rowCount], function(err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
-                item.image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                //item.image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
                 done(null);
             });
-            dbConn.release();
-            callback(null, results);
+            var data = {};
+            data.storeList = results;
+            callback(null, data);
         });
     });
 }

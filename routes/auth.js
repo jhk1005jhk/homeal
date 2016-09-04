@@ -7,23 +7,28 @@ var FacebookTokenStrategy = require('passport-facebook-token');
 var User = require('../models/user');
 var isSecure = require('./common').isSecure;
 var isAuthenticated = require('./common').isAuthenticated;
-// 로컬 로그인
-passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },
-    function(email, password, done) {
+
+//----------------------------------------------------------------------------------------------------------------------
+// 로컬 관련
+//----------------------------------------------------------------------------------------------------------------------
+/* 로컬 로그인 전략 */
+passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' }, function(email, password, done) {
     User.findByEmail(email, function(err, user) {
-        if (err)
+        if (err) // 에러
             return done(err);
-        if (!user)
-            return done(null, false);
-        User.verifyPassword(password, user.password, function(err, result) {
-            if (err)
-                return done(err);
-            if (!result)
-                return done(null, false);
-            done(null, user);
-        });
-    });
+        if (!user) // req 객체가 반환 안되면
+            return done(null, false); // 로그인 실패
+        done(null, user); // user 객체 넘겨줌
+    })
 }));
+/* 레디스 세션에 저장 */
+passport.serializeUser(function(user, done) {
+    done(null, user); // user 객체 넘김
+});
+/* 레디스 세션에서 불러오기 */
+passport.deserializeUser(function(user, done) {
+    done(null, user); // user 반환
+});
 /* 로컬 로그인 */
 router.post('/local/login', function(req, res, next) {
     passport.authenticate('local', function(err, user) {
@@ -31,10 +36,10 @@ router.post('/local/login', function(req, res, next) {
             return next(err);
         if (!user) {
             return res.status(401).send({
-                message: '로그인 실패'
+                code: 0,
+                message: '로컬 로그인에 실패했습니다'
             });
         }
-
         req.login(user, function(err) { // req.user를 만들어 준다.
             if (err)
                 return next(err);
@@ -42,24 +47,24 @@ router.post('/local/login', function(req, res, next) {
         });
     })(req, res, next);
 }, function(req, res, next) {
-    var user = {};
-    user.email = req.user.email;
-    user.name = req.user.name;
     res.send({
-        'message': '로그인 성공',
-        'user': user
+        code: 1,
+        message: '로컬 로그인 성공'
     });
 });
 /* 로컬 로그아웃 */
 router.get('/local/logout', isSecure, isAuthenticated, function(req, res, next) {
     req.logout();
     res.send({
-        message: 'local logout'
+        code: 1,
+        message: '로컬 로그아웃 완료'
     });
 });
 
 
-
+//----------------------------------------------------------------------------------------------------------------------
+// 페이스북 관련
+//----------------------------------------------------------------------------------------------------------------------
 // 페이스북 로그인 (토큰 얻기)
 passport.use(new FacebookStrategy({
         clientID: process.env.FACEBOOK_APP_ID,
@@ -90,14 +95,6 @@ passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
         });
     }
 ));
-/* 레디스 세션에 저장 */
-passport.serializeUser(function(user, done) {
-    done(null, user);
-});
-/* 레디스 세션에서 불러오기 */
-passport.deserializeUser(function(user, done) {
-    done(null, user);
-});
 /* access_token 받아오는 URL */
 router.get('/facebook', passport.authenticate('facebook', {scope: ['email']}));
 router.get('/facebook/callback', passport.authenticate('facebook'), function(req, res, next) { // Ok 하면, call URL 필요
@@ -105,13 +102,17 @@ router.get('/facebook/callback', passport.authenticate('facebook'), function(req
 });
 /* 페이스북 로그인 (access_token 매개변수로 넘겨줘야 함) */
 router.post('/facebook/token', isSecure, passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
-    res.send(req.user? '성공' : '실패');
+    res.send({
+        code: 1,
+        message: req.user? '페이스북 로그인 성공' : '페이스북 로그인 실패'
+    });
 });
 /* 페이스북 로그아웃 */
 router.get('/logout', function(req, res, next) {
     req.logout();
     res.send({
-        message: '로그아웃 완료'
+        code: 1,
+        message: '페이스북 로그아웃 완료'
     });
 });
 

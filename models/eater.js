@@ -7,9 +7,8 @@ var fs = require('fs');
 /* 잇터 정보 조회 */
 function showEaterInfo(data, callback) {
     var sql = 'select * ' +
-        'from user u join eater e on (u.id = e.user_id) ' +
-        'where id = ?';
-    console.log('데이타: ' + data);
+              'from user u join eater e on (u.id = e.user_id) ' +
+              'where id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -19,16 +18,16 @@ function showEaterInfo(data, callback) {
             if (err) {
                 return callback(err);
             }
-
-            console.log(results);
             var filename = path.basename(results[0].image); // 사진이름
             if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
-                /* EC2 Image URL */
-                results[0].image = url.resolve('http://ec2-52-78-131-245.ap-northeast-2.compute.amazonaws.com:' + process.env.PORT, '/users/' + filename);
-                /* Local Image URL */
-                // results[0].image = url.resolve('http://localhost:' + process.env.PORT, '/users/' + filename);
+                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
             };
-            callback(null, results);
+            var data = {};
+            data.image = results[0].image;
+            data.name = results[0].name;
+            data.type = results[0].type;
+            data.point = results[0].point;
+            callback(null, data);
         });
     });
 }
@@ -36,8 +35,8 @@ function showEaterInfo(data, callback) {
 function updateEaterInfo(data, callback) {
     var sql_selectDeleteFilePath = 'select image from user where id = ?'; // 지울 사진 경로
     var sql_updateUserInfo = 'update user ' +
-        'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
-        'where id = ?';
+                             'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
+                             'where id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);

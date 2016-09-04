@@ -34,7 +34,16 @@ function showBookmark(data, callback) {
             if (err) {
                 return callback(err);
             }
-            callback(null, results);
+            data.id = '1';
+            data.image = "http://image.test";
+            data.name = '테스트';
+            data.address = '서울';
+            data.introduce = '소개';
+            data.thumbnail = "http://thumbnail.test";
+            data.grade = '1';
+            data.bookmarkCnt = '10';
+            data.reviewCnt = '5';
+            callback(null, data);
         });
     });
 }

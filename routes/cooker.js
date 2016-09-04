@@ -8,9 +8,10 @@ var isAuthenticated = require('./common').isAuthenticated;
 
 /* 쿠커 정보 조회 */
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
-    var message = '쿠커 나의 정보 조회 완료';
+    var message = '쿠커 내 정보 조회 완료';
     var data = {};
     data.id = req.user.id;
+
     Cooker.showCookerInfo(data, function(err, result) {
         if (err) {
             return next(err);
@@ -47,13 +48,14 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
                 return next(err);
             }
             res.send({
+                code: 1,
                 message: message
             });
         });
     });
 });
 /* 쿠커 페이지 조회 */
-router.get('/:id', function(req, res, next) {
+router.get('/:id', isAuthenticated, function(req, res, next) {
     var message = "쿠커 페이지 조회 완료";
     var data = {};
     data.id = req.params.id;
@@ -63,6 +65,7 @@ router.get('/:id', function(req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             cooker_info: results[0],
             cooker_menu: results[1],
@@ -71,7 +74,7 @@ router.get('/:id', function(req, res, next) {
     });
 });
 /* 쿠커 섬네일 검색 & 목록 조회 */
-router.get('/', function(req, res, next) {
+router.get('/', isAuthenticated, function(req, res, next) {
     /* 쿠커 섬네일 페이지 검색 */
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
         var message = "쿠커 검색 완료";
@@ -84,6 +87,7 @@ router.get('/', function(req, res, next) {
                 return next(err);
             }
             res.send({
+                code: 1,
                 message: message,
                 result: results
             });
@@ -99,9 +103,12 @@ router.get('/', function(req, res, next) {
             if (err) {
                 return next(err);
             }
+            var data = {};
+            data.storeList = results;
             res.send({
+                code: 1,
                 message: message,
-                result: results
+                results: data
             });
         });
     }
@@ -111,13 +118,16 @@ router.get('/:id/menus', function(req, res, next) {
     var message = '쿠커 메뉴 조회 완료';
     var data = {};
     data.id = req.params.id;
-    Cooker.showCookerMenu(data, function(err, result) {
+    Cooker.showCookerMenu(data, function(err, results) {
         if (err) {
             return next(err);
         }
+        var data = {};
+        data.menus = results;
         res.send({
+            code: 1,
             message: message,
-            result: result
+            results: data
         });
     });
 });
@@ -130,11 +140,28 @@ router.get('/:id/schedules', function(req, res, next) {
         if (err) {
             return next(err);
         }
+        var data = {};
+        data.schedules = results;
         res.send({
+            code: 1,
             message: message,
-            result: results
+            results: data
         });
     });
 });
 
+/* 후기 조회 */
+router.get('/:id/reviews', function(req, res, next) {
+    var id = req.params.id;
+    var message = "예약 목록 조회 완료";
+    var pageNo = req.query.pageNo;
+    var rowCount = req.query.rowCount;
+    res.send({
+        code: 1,
+        id: id,
+        message: message,
+        pageNo: pageNo,
+        rowCount: rowCount
+    });
+});
 module.exports = router;
