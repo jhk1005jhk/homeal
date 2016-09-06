@@ -45,14 +45,14 @@ function showReservation(data, callback) {
     var sql_selectUserType =
         'select type from user where id = ?';
     var sql_reservationOfCooker =
-        'select u.id uid, u.name uname, u.image uimage, c.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
+        'select u.id uid, u.name uname, u.image uimage, u.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
         'from reservation r join schedule s on (r.schedule_id = s.id) ' +
                            'join menu m on (r.menu_id = m.id) ' +
                            'join user u on (r.cooker_user_id = u.id) ' +
                            'join cooker c on (u.id = c.user_id) ' +
         'where u.id = ?';
     var sql_reservationOfEater =
-        'select u.id uid, u.name uname, u.image uimage, e.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
+        'select u.id uid, u.name uname, u.image uimage, u.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
         'from reservation r join schedule s on (r.schedule_id = s.id) ' +
                            'join menu m on (r.menu_id = m.id) ' +
                            'join user u on (r.eater_user_id = u.id) ' +

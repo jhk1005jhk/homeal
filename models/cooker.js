@@ -24,10 +24,7 @@ function showCookerInfo(data, callback) {
             if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
                 results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
             };
-
-            var data = {};
-            data.info = results[0];
-            callback(null, data);
+            callback(null, results[0]);
         });
     });
 }
@@ -106,7 +103,7 @@ function updateCookerInfo(data, callback) {
         });
     })
 }
-/* 쿠커 가게 상세 페이지 조회 */
+/* 쿠커 가게 페이지 조회 */
 function showCookerStore(data, callback) {
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -124,9 +121,10 @@ function showCookerStore(data, callback) {
     });
     /* 쿠커 섬네일 조회*/
     function showCookerThumbnail(callback) {
-        var sql = 'select c.user_id, image ' +
-                  'from cooker c join image i on (c.user_id = i.cooker_user_id) ' +
-                  'where c.user_id = ?';
+        var sql =
+            'select image ' +
+            'from cooker c join image i on (c.user_id = i.cooker_user_id) ' +
+            'where c.user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 dbConn.release();
@@ -142,19 +140,20 @@ function showCookerStore(data, callback) {
                     item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + filename);
                     done(null);
                 });
-                var data = {};
-                data.thumbnails = results
-                callback(null, data);
+                callback(null, results);
             });
         });
     }
-    /* 쿠커 정보 조회 */
+    /* 쿠커 정보 조회 */ // grade 수정
     function showCookerInfo(callback) {
-        var sql = 'select image, name, gender, birth, country, phone, introduce, address, longitude, latitude, accumulation, ' +
-                          'round((avg(price)+avg(cleanliness)+avg(kindness))/3, 1) as grade, round(avg(price), 1) as price, round(avg(cleanliness), 1) as cleanliness, round(avg(kindness), 1) as kindness ' +
-                  'from user u join cooker c on (u.id = c.user_id) ' +
-                              'join cooker_review cr on (u.id = cr.cooker_user_id) ' +
-                  'where cooker_user_id = 38';
+        var sql =
+            'select image, name, gender, birth, country, phone, introduce, address, longitude, latitude, accumulation, ' +
+                    'round((avg(taste) + avg(price) + avg(cleanliness) + avg(kindness))/4, 1) grade, ' +
+                    'round(avg(taste), 1) taste, round(avg(price), 1) price, ' +
+                    'round(avg(cleanliness), 1) cleanliness, round(avg(kindness), 1) kindness ' +
+            'from user u join cooker c on (u.id = c.user_id) ' +
+                        'join cooker_review cr on (u.id = cr.cooker_user_id) ' +
+            'where cooker_user_id = ?';
 
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
@@ -174,7 +173,7 @@ function showCookerStore(data, callback) {
     }
     /* 쿠커 메뉴 목록 조회 */
     function showCookerMenu(callback) {
-        var sql = 'select name, image, price, introduce, activation ' +
+        var sql = 'select id, name, image, price, introduce, activation ' +
                   'from menu ' +
                   'where cooker_user_id = ?';
 
@@ -193,15 +192,13 @@ function showCookerStore(data, callback) {
                         item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                         done(null);
                     });
-                    var data = {};
-                    data.menus = results
-                    callback(null, data);
+                    callback(null, results);
                 });
         });
     }
     /* 쿠커 일정 목록 조회 */
     function showCookerSchedule(callback) {
-        var sql = 'select date_format(date, \'%Y/%m/%d %H:%i\') as date, pax, sharing ' +
+        var sql = 'select id, date_format(date, \'%Y/%m/%d %H:%i\') as date, pax, sharing ' +
                   'from schedule ' +
                   'where cooker_user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
@@ -214,9 +211,7 @@ function showCookerStore(data, callback) {
                 if (err) {
                     return callback(err);
                 }
-                var data = {};
-                data.schedules = results;
-                callback(null, data);
+                callback(null, results);
             });
         });
     }
@@ -242,9 +237,7 @@ function showCookerMenu(data, callback) {
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                 done(null);
             });
-            var data = {};
-            data.menus = results;
-            callback(null, data);
+            callback(null, results);
         });
     });
 }
@@ -263,13 +256,11 @@ function showCookerSchedule(data, callback) {
             if (err) {
                 return callback(err);
             }
-            var data = {};
-            data.schedules = results;
-            callback(null, data);
+            callback(null, results);
         });
     });
 }
-/* 쿠커 스토어 목록 조회 */
+/* 쿠커 섬네일 목록 조회 */
 function showCookerStoreList(data, callback) {
     // 쿠커 전체의 정보
     var sql_selectCookerInfo =
@@ -298,9 +289,7 @@ function showCookerStoreList(data, callback) {
                 item.isBookmark = 0;
                 done(null);
             });
-            var data = {};
-            data.storeThumbnails = results;
-            callback(null, data);
+            callback(null, results);
         });
     });
 }
@@ -330,18 +319,17 @@ function searchCookerStore(data, callback) {
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
                 done(null);
             });
-            var data = {};
-            data.storeList = results;
-            callback(null, data);
+            callback(null, results);
         });
     });
 }
 /* 쿠커 후기 목록 조회 */
 function showCookerReview(data, callback) {
     var sql_showCookerReview =
-        'select cooker_user_id id, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
-        'from eater_review er join user u on (er.eater_user_id = u.id) ' +
-        'where eater_user_id = ?';
+        'select cooker_user_id id, u.image, u.name, taste, price,cleanliness, kindness, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+        'from cooker_review cr join user u on (cr.cooker_user_id = u.id) ' +
+        'where cooker_user_id = ?';
+
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
             dbConn.release();

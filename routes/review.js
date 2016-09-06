@@ -12,6 +12,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
     data.targetId = req.body.targetId;                    // 누구에 대해
     data.review = req.body.review;                        // 리뷰 내용
     // 쿠커 ------------------------------------------------------------------------------------------------------------
+    data.taste = req.body.price || null;
     data.price = req.body.price || null;                  // 가격
     data.cleanliness = req.body.cleanliness || null;      // 청결
     data.kindness = req.body.kindness || null;            // 친절

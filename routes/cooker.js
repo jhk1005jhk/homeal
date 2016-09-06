@@ -17,6 +17,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             result: result
         });
@@ -38,7 +39,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
         data.image = files.image.path;
         data.name = fields.name;
         data.gender = fields.gender;
-        data.birth = parseInt(fields.birth, 10);
+        data.birth = fields.birth;
         data.country = fields.country;
         data.phone = fields.phone;
         data.introduce = fields.introduce;
@@ -74,7 +75,7 @@ router.get('/:id', isAuthenticated, function(req, res, next) {
         });
     });
 });
-/* 쿠커 섬네일 검색 & 목록 조회 */
+/* 쿠커 섬네일 검색 & 쿠커 섬네일 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
     /* 쿠커 섬네일 페이지 검색 */
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
@@ -90,6 +91,8 @@ router.get('/', isAuthenticated, function(req, res, next) {
             res.send({
                 code: 1,
                 message: message,
+                pageNo: data.pageNo,
+                rowCount: data.rowCount,
                 result: results
             });
         });
@@ -107,6 +110,8 @@ router.get('/', isAuthenticated, function(req, res, next) {
             res.send({
                 code: 1,
                 message: message,
+                pageNo: data.pageNo,
+                rowCount: data.rowCount,
                 result: results
             });
         });
@@ -154,12 +159,10 @@ router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var data = {};
-        data.reviews = results;
         res.send({
             code: 1,
             message: message,
-            result: data
+            result: results
         });
     });
 });

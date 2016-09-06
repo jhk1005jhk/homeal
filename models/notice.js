@@ -4,6 +4,7 @@ var fcm = require('node-gcm');
 
 router.post('/', function(req, res, next) {
     var id = req.body.id;
+
     // token을 select
     // message를 insert
 
@@ -21,7 +22,7 @@ router.post('/', function(req, res, next) {
     });
 
     var sender = new fcm.Sender('AIzaSyBRahrJR-2z0ADAKsAfcAfYaAK1GzYrVNY');
-    sender.send(message, {registrationTokens: tokens}, function(err, response) {
+    sender.send(message, {registrationTokens: token}, function(err, res) {
         if (err) {
             return next(err);
         }

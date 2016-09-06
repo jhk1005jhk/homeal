@@ -38,7 +38,7 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
         data.image = files.image.path;
         data.name = fields.name;
         data.gender = fields.gender;
-        data.birth = parseInt(fields.birth, 10);
+        data.birth = fields.birth;
         data.country = fields.country;
         data.phone = fields.phone;
         data.introduce = fields.introduce;

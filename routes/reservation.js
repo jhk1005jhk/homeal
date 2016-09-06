@@ -32,12 +32,10 @@ router.get('/', isAuthenticated, function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var data = {};
-        data.reservations = results;
         res.send({
             code: 1,
             message: message,
-            result: data
+            result: results
         });
     });
 });

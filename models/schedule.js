@@ -2,8 +2,9 @@ var dbPool = require('../models/common').dbPool;
 
 /* 일정 생성 */
 function createSchedule(data, callback) {
-    var sql = 'insert into schedule(cooker_user_id, date, pax, sharing) ' +
-               'values (?, str_to_date(?, "%Y/%m/%d %h:%i:%s"), ?, ?)';
+    var sql =
+        'insert into schedule(cooker_user_id, date, pax, sharing) ' +
+        'values (?, str_to_date(?, "%Y/%m/%d %h:%i:%s"), ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);

@@ -4,6 +4,7 @@ var Menu = require('../models/menu');
 var formidable = require('formidable');
 var path = require('path');
 var isAuthenticated = require('./common').isAuthenticated;
+
 /* 메뉴 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
     var form = new formidable.IncomingForm();

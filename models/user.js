@@ -64,9 +64,10 @@ function findByEmail(email, callback) {
 //----------------------------------------------------------------------------------------------------------------------
 /* 회원 정보 생성 */
 function registerUser(newUser, callback) {
-    var sql_registerUser = 'update user ' +
-                           'set gender = ?, birth = ?, country = ?, phone = ?, introduce = ?, type = ? ' +
-                           'where facebook_id = ?';
+    var sql_registerUser =
+        'update user ' +
+        'set gender = ?, birth = ?, country = ?, phone = ?, introduce = ?, type = ? ' +
+        'where facebook_id = ?';
     var sql_registerCooker = 'insert into cooker (user_id) values (?)';
     var sql_registerEater = 'insert into eater (user_id) values (?)';
 
@@ -139,12 +140,14 @@ function registerUser(newUser, callback) {
 /* 회원 정보 조회 */
 function showUser(showUser, callback) {
     var sql_selectUserType = 'select type from user where id = ?';
-    var sql_findCooker = 'select * ' +
-                         'from user u join cooker c on (u.id = c.user_id) ' +
-                         'where u.id = ?';
-    var sql_findEater = 'select * ' +
-                        'from user u join eater e on (u.id = e.user_id) ' +
-                        'where u.id = ?';
+    var sql_findCooker =
+        'select * ' +
+        'from user u join cooker c on (u.id = c.user_id) ' +
+        'where u.id = ?';
+    var sql_findEater =
+        'select * ' +
+        'from user u join eater e on (u.id = e.user_id) ' +
+        'where u.id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -244,7 +247,6 @@ function FB_findOrCreate(profile, callback) {
         });
     });
 }
-
 /* 회원 정보 삭제 (보류)*/
 function deleteUser(deleteUserId, callback) {
     var sql_selectUserType = 'select type from user where id = ?';
@@ -343,8 +345,6 @@ function deleteUser(deleteUserId, callback) {
         }
     });
 }
-
-
 
 //----------------------------------------------------------------------------------------------------------------------
 // 로컬 관련

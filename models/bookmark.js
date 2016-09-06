@@ -1,5 +1,8 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var path = require('path');
+var url = require('url');
+var fs = require('fs');
 
 /* 찜 생성 */
 function createBookmark(data, callback) {
@@ -15,7 +18,6 @@ function createBookmark(data, callback) {
         if (err) {
             return callback(err);
         }
-
         async.parallel([createBookmark, updateBookmarkCount], function(err, results) {
             dbConn.release();
             if (err) {
@@ -46,10 +48,10 @@ function createBookmark(data, callback) {
 }
 /* 찜 조회 */
 function showBookmark(data, callback) {
-    var sql = 'select u.id, u.image, u.name name, c.address, u.introduce, i.image thumbnail ' +
+    var sql = 'select u.id cid, i.image thumbnail, u.image, u.name name, c.address, u.introduce, accumulation, reviewCnt, bookmarkCnt, grade  ' +
               'from cooker c join bookmark b on (c.user_id = b.cooker_user_id) ' +
-              'join user u on (c.user_id = c.user_id) ' +
-              'join image i on (c.user_id = i.cooker_user_id) ' +
+                            'join user u on (c.user_id = c.user_id) ' +
+                            'join image i on (c.user_id = i.cooker_user_id) ' +
               'where b.eater_user_id = ? ' +
               'group by user_id';
 
@@ -61,9 +63,15 @@ function showBookmark(data, callback) {
             if (err) {
                 return callback(err);
             }
-            var data = {};
-            data.bookmarks = results;
-            callback(null, data);
+            async.each(results, function (item, done) {
+                var userFileName = path.basename(item.image);         // 유저 사진 이름
+                var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
+                item.isBookmark = 0;
+                done(null);
+            });
+            callback(null, results);
         });
     });
 }

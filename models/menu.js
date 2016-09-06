@@ -6,14 +6,14 @@ var fs = require('fs');
 
 /* 메뉴 생성 */
 function createMenu(data, callback) {
-    var sql = 'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
-              'values (?, ?, ?, ?, ?, ?, ?)';
+    var sql_createMenu =
+        'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
+        'values (?, ?, ?, ?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation],
-            function(err, result) {
+        dbConn.query(sql_createMenu, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation], function(err, result) {
                 dbConn.release();
                 if (err) {
                     return callback(err);
@@ -24,10 +24,12 @@ function createMenu(data, callback) {
 }
 /* 메뉴 수정 */
 function updateMenu(data, callback) {
-    var sql_selectDeleteFilePath = 'select image from menu where id = ?'; // 지울 사진 경로
-    var sql_updateMenuInfo = 'update menu ' +
-                             'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
-                             'where id = ?';
+    var sql_selectDeleteFilePath =
+        'select image from menu where id = ?'; // 지울 사진 경로
+    var sql_updateMenuInfo =
+        'update menu ' +
+        'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
+        'where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -67,7 +69,7 @@ function updateMenu(data, callback) {
                 dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id],
                     function(err, result) {
                         if (err) {
-                            return console.log(err);
+                            return callback(err);
                         }
                         callback(null);
                     });
@@ -77,13 +79,13 @@ function updateMenu(data, callback) {
 }
 /* 메뉴 삭제 */
 function deleteMenu(data, callback) {
-    var sql = 'delete from menu where id = ?';
+    var sql_deleteMenu = 'delete from menu where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql, [data.id], function(err, result) {
+        dbConn.query(sql_deleteMenu, [data.id], function(err, result) {
                 if (err) {
                     return console.log(err);
                 }
@@ -91,6 +93,7 @@ function deleteMenu(data, callback) {
             });
     });
 }
+
 module.exports.createMenu = createMenu;
 module.exports.updateMenu = updateMenu;
 module.exports.deleteMenu = deleteMenu;

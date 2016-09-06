@@ -39,6 +39,7 @@ router.get('/:id', isSecure, isAuthenticated, function(req, res, next) {
             return next(err);
         }
         res.send({
+            code: 1,
             message: message,
             result: results
         });

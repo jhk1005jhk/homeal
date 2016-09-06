@@ -23,7 +23,7 @@ function showEaterInfo(data, callback) {
             var filename = path.basename(results[0].image); // 사진이름
             if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
                 results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
-            };
+            }
             var data = {};
             data.image = results[0].image;
             data.name = results[0].name;
@@ -112,9 +112,7 @@ function showEaterReview(data, callback) {
             if (err) {
                 return callback(err);
             }
-            var data = {};
-            data.reviews = results;
-            callback(null, data);
+            callback(null, results);
         });
     });
 }
