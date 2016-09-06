@@ -9,7 +9,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
     var data = {};
     data.eater = req.user.id;
     data.cooker = req.body.cooker;
-    Bookmark.createBookmark(data, function(err, result) {
+    Bookmark.createBookmark(data, function(err, results) {
         if (err) {
             return next(err);
         }
@@ -19,7 +19,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
         });
     });
 });
-
 /* 잇터 찜 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
     var message = "찜 조회 완료";
@@ -29,12 +28,10 @@ router.get('/', isAuthenticated, function(req, res, next) {
        if (err) {
            return next(err);
        }
-       var data = {};
-       data.bookmarks = results;
        res.send({
            code: 1,
            message: message,
-           result: data
+           result: results
        });
     });
 });

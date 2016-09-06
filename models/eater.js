@@ -6,14 +6,16 @@ var fs = require('fs');
 
 /* 잇터 정보 조회 */
 function showEaterInfo(data, callback) {
-    var sql = 'select * ' +
-              'from user u join eater e on (u.id = e.user_id) ' +
-              'where id = ?';
+    var sql_showEaterInfo =
+        'select * ' +
+        'from user u join eater e on (u.id = e.user_id) ' +
+        'where id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql, [data.id], function(err, results) {
+        dbConn.query(sql_showEaterInfo, [data.id], function(err, results) {
             dbConn.release();
             if (err) {
                 return callback(err);
@@ -33,10 +35,13 @@ function showEaterInfo(data, callback) {
 }
 /* 잇터 정보 수정 */
 function updateEaterInfo(data, callback) {
-    var sql_selectDeleteFilePath = 'select image from user where id = ?'; // 지울 사진 경로
-    var sql_updateUserInfo = 'update user ' +
-                             'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
-                             'where id = ?';
+    var sql_selectDeleteFilePath =
+        'select image from user where id = ?'; // 지울 사진 경로
+    var sql_updateUserInfo =
+        'update user ' +
+        'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
+        'where id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -90,5 +95,29 @@ function updateEaterInfo(data, callback) {
         });
     })
 }
+/* 잇터 후기 목록 조회 */
+function showEaterReview(data, callback) {
+    var sql =
+        'select cooker_user_id id, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+        'from eater_review er join user u on (er.eater_user_id = u.id) ' +
+        'where eater_user_id = ?';
+
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            dbConn.release();
+            return callback(err);
+        }
+        dbConn.query(sql, [data.id], function(err, results) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+            var data = {};
+            data.reviews = results;
+            callback(null, data);
+        });
+    });
+}
 module.exports.showEaterInfo = showEaterInfo;
 module.exports.updateEaterInfo = updateEaterInfo;
+module.exports.showEaterReview = showEaterReview;

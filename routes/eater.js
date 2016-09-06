@@ -22,7 +22,6 @@ router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
         });
     });
 });
-
 /* 잇터 정보 수정 */
 router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
     var form = new formidable.IncomingForm();
@@ -43,7 +42,7 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
         data.country = fields.country;
         data.phone = fields.phone;
         data.introduce = fields.introduce;
-        Eater.updateEaterInfo(data, function (err) {
+        Eater.updateEaterInfo(data, function(err, result) {
             if (err) {
                 return next(err);
             }
@@ -54,4 +53,22 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
         });
     });
 });
+/* 잇터 후기 조회 */
+router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
+    var id = req.params.id;
+    var message = "잇터 후기 조회 완료";
+    var data = {};
+    data.id = id;
+    Eater.showEaterReview(data, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            code: 1,
+            message: message,
+            result: results
+        });
+    });
+});
+
 module.exports = router;

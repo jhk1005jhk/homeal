@@ -6,9 +6,10 @@ var fs = require('fs');
 
 /* 쿠커 정보 조회 - 페이스북 사진인지 판단 */
 function showCookerInfo(data, callback) {
-    var sql = 'select * ' +
-              'from user u join cooker c on (u.id = c.user_id) ' +
-              'where id = ?';
+    var sql =
+        'select image, gender, birth, phone, address, country, introduce, name, type, grade ' +
+        'from user u join cooker c on (u.id = c.user_id) ' +
+        'where user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -25,23 +26,24 @@ function showCookerInfo(data, callback) {
             };
 
             var data = {};
-            data.image = results[0].image;
-            data.name = results[0].name;
-            data.type = results[0].type;
-            data.grade = results[0].grade;
+            data.info = results[0];
             callback(null, data);
         });
     });
 }
 /* 쿠커 정보 수정 */
 function updateCookerInfo(data, callback) {
-    var sql_selectDeleteFilePath = 'select image from user where id = ?'; // 지울 사진 경로
-    var sql_updateUserInfo = 'update user ' +
-                             'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
-                             'where id = ?';
-    var sql_updateCookerInfo = 'update cooker ' +
-                               'set address = ? ' +
-                               'where user_id = ?';
+    var sql_selectDeleteFilePath =
+        'select image from user where id = ?'; // 지울 사진 경로
+    var sql_updateUserInfo =
+        'update user ' +
+        'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
+        'where id = ?';
+    var sql_updateCookerInfo =
+        'update cooker ' +
+        'set address = ? ' +
+        'where user_id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             dbConn.release();
@@ -111,7 +113,7 @@ function showCookerStore(data, callback) {
             dbConn.release();
             return callback(err);
         }
-        async.parallel([showCookerInfo, showCookerMenu, showCookerSchedule], function (err, results) {
+        async.parallel([showCookerThumbnail, showCookerInfo, showCookerMenu, showCookerSchedule], function (err, results) {
             dbConn.release();
             if (err) {
                 return callback(err);
@@ -120,43 +122,11 @@ function showCookerStore(data, callback) {
             }
         });
     });
-    /* 쿠커 정보 조회 */
-    function showCookerInfo(callback) {
-        var sql = 'select * ' +
-                  'from user u join cooker c on (u.id = c.user_id) '  +
-                  'join cooker_review cr on (u.id = cooker_user_id) ' +
-                  'where id = ?';
-        dbPool.getConnection(function(err, dbConn) {
-            if (err) {
-                dbConn.release();
-                return callback(err);
-            }
-            dbConn.query(sql, [data.id], function(err, results) {
-                dbConn.release();
-                if (err) {
-                    return callback(err);
-                }
-                var filename = path.basename(results[0].image); // 사진이름
-                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
-                var data = {};
-                data.thumbnail = ['http://testUrl1.com','http://testUrl2.com','http://testUrl3.com'];
-                data.image = results[0].image;
-                data.name = results[0].name;
-                data.address = results[0].address;
-                data.longitude = results[0].longitude;
-                data.latitude = results[0].latitude;
-                data.grade = results[0].grade;
-                data.taste = results[0].taste;
-                data.cleanliness = results[0].cleanliness;
-                data.kindness = results[0].kindness;
-                data.review = results[0].review;
-                callback(null, data);
-            });
-        });
-    }
-    /* 쿠커 메뉴 목록 조회 */
-    function showCookerMenu(callback) {
-        var sql = 'select * from menu where cooker_user_id = ?';
+    /* 쿠커 섬네일 조회*/
+    function showCookerThumbnail(callback) {
+        var sql = 'select c.user_id, image ' +
+                  'from cooker c join image i on (c.user_id = i.cooker_user_id) ' +
+                  'where c.user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 dbConn.release();
@@ -169,24 +139,71 @@ function showCookerStore(data, callback) {
                 }
                 async.each(results, function(item, done) {
                     var filename = path.basename(item.image); // 사진이름
-                   item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
+                    item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + filename);
                     done(null);
                 });
                 var data = {};
-                data.id = results[0].id;
-                data.name = results[0].name;
-                data.image = results[0].image;
-                data.price = results[0].price;
-                data.introduce = results[0].introduce;
-                data.currency = results[0].currency;
-                data.activation = results[0].activation;
+                data.thumbnails = results
                 callback(null, data);
             });
         });
     }
+    /* 쿠커 정보 조회 */
+    function showCookerInfo(callback) {
+        var sql = 'select image, name, gender, birth, country, phone, introduce, address, longitude, latitude, accumulation, ' +
+                          'round((avg(price)+avg(cleanliness)+avg(kindness))/3, 1) as grade, round(avg(price), 1) as price, round(avg(cleanliness), 1) as cleanliness, round(avg(kindness), 1) as kindness ' +
+                  'from user u join cooker c on (u.id = c.user_id) ' +
+                              'join cooker_review cr on (u.id = cr.cooker_user_id) ' +
+                  'where cooker_user_id = 38';
+
+        dbPool.getConnection(function(err, dbConn) {
+            if (err) {
+                dbConn.release();
+                return callback(err);
+            }
+            dbConn.query(sql, [data.id], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                var filename = path.basename(results[0].image); // 사진이름
+                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                callback(null, results[0]);
+            });
+        });
+    }
+    /* 쿠커 메뉴 목록 조회 */
+    function showCookerMenu(callback) {
+        var sql = 'select name, image, price, introduce, activation ' +
+                  'from menu ' +
+                  'where cooker_user_id = ?';
+
+            dbPool.getConnection(function(err, dbConn) {
+                if (err) {
+                    dbConn.release();
+                    return callback(err);
+                }
+                dbConn.query(sql, [data.id], function(err, results) {
+                    dbConn.release();
+                    if (err) {
+                        return callback(err);
+                    }
+                    async.each(results, function(item, done) {
+                        var filename = path.basename(item.image); // 사진이름
+                        item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
+                        done(null);
+                    });
+                    var data = {};
+                    data.menus = results
+                    callback(null, data);
+                });
+        });
+    }
     /* 쿠커 일정 목록 조회 */
     function showCookerSchedule(callback) {
-        var sql = 'select * from schedule where cooker_user_id = ?';
+        var sql = 'select date_format(date, \'%Y/%m/%d %H:%i\') as date, pax, sharing ' +
+                  'from schedule ' +
+                  'where cooker_user_id = ?';
         dbPool.getConnection(function(err, dbConn) {
             if (err) {
                 dbConn.release();
@@ -206,7 +223,10 @@ function showCookerStore(data, callback) {
 }
 /* 쿠커 메뉴 목록 조회 */
 function showCookerMenu(data, callback) {
-    var sql = 'select * from menu where cooker_user_id = ?';
+    var sql = 'select name, image, price, introduce, activation ' +
+              'from menu ' +
+              'where cooker_user_id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             dbConn.release();
@@ -219,24 +239,20 @@ function showCookerMenu(data, callback) {
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
-               item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                 done(null);
             });
             var data = {};
-            data.id = results[0].id;
-            data.name = results[0].name;
-            data.image = results[0].image;
-            data.price = results[0].price;
-            data.introduce = results[0].introduce;
-            data.currency = results[0].currency;
-            data.activation = results[0].activation;
-            callback(null, results);
+            data.menus = results;
+            callback(null, data);
         });
     });
 }
 /* 쿠커 일정 목록 조회 */
 function showCookerSchedule(data, callback) {
-    var sql = 'select * from schedule where cooker_user_id = ?';
+    var sql = 'select date_format(date, \'%Y/%m/%d %H:%i\') as date, pax, sharing ' +
+              'from schedule ' +
+              'where cooker_user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             dbConn.release();
@@ -247,55 +263,56 @@ function showCookerSchedule(data, callback) {
             if (err) {
                 return callback(err);
             }
-            callback(null, results);
+            var data = {};
+            data.schedules = results;
+            callback(null, data);
         });
     });
 }
-/* 쿠커 섬네일 목록 조회 */
+/* 쿠커 스토어 목록 조회 */
 function showCookerStoreList(data, callback) {
-    var sql = 'select * ' +
-              'from user u join cooker c on (u.id = c.user_id) ' +
-              'join image i on (u.id = i.cooker_user_id) ' +
-              'group by u.id ' +
-              'limit ?, ?';
-    dbPool.getConnection(function(err, dbConn) {
+    // 쿠커 전체의 정보
+    var sql_selectCookerInfo =
+        'select u.id cid, i.image thumbnail, u.image image, u.name name, c.address address, u.introduce introduce, accumulation, reviewCnt, bookmarkCnt, grade ' +
+        'from user u join cooker c on (u.id = c.user_id) ' +
+        'join image i on (c.user_id = i.cooker_user_id) ' +
+        'group by u.id ' +
+        'limit ?, ?';
+
+    dbPool.getConnection(function (err, dbConn) {
         if (err) {
             return callback(err);
         }
         data.pageNo = parseInt(data.rowCount * (data.pageNo - 1)); // 숫자로 변환
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
-        dbConn.query(sql, [data.pageNo, data.rowCount], function(err, results) {
-            dbConn.release();
+        dbConn.query(sql_selectCookerInfo, [data.pageNo, data.rowCount], function (err, results) {
             if (err) {
                 return callback(err);
             }
-            async.each(results, function(item, done) {
-                var filename = path.basename(item.image); // 사진이름
-                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+            async.each(results, function (item, done) {
+                var userFileName = path.basename(item.image);         // 유저 사진 이름
+                var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
+                item.isBookmark = 0;
                 done(null);
             });
-            // data.id = results[0].id;
-            // data.image = results[0].image;
-            // data.name = results[0].name;
-            // data.address = results[0].address;
-            // data.thumbnail = 'http://url.test';
-            // data.grade = '1';
-            // data.bookmarkCnt = '5';
-            // data.reviewCnt = '5';
-            callback(null, results);
+            var data = {};
+            data.storeThumbnails = results;
+            callback(null, data);
         });
     });
 }
 /* 쿠커 섬네일 페이지 검색 */
 function searchCookerStore(data, callback) {
     var sql = 'select * ' +
-              'from user u join cooker c on (u.id = c.user_id) ' +
-              'join image i on (u.id = i.cooker_user_id) ' +
-              'where name like ? or address like ? ' +
-              'group by u.id ' +
-              'limit ?, ?';
-    dbPool.getConnection(function(err, dbConn) {
+        'from user u join cooker c on (u.id = c.user_id) ' +
+        'join image i on (u.id = i.cooker_user_id) ' +
+        'where name like ? or address like ? ' +
+        'group by u.id ' +
+        'limit ?, ?';
+    dbPool.getConnection(function (err, dbConn) {
         if (err) {
             return callback(err);
         }
@@ -303,12 +320,12 @@ function searchCookerStore(data, callback) {
         data.pageNo = parseInt(data.rowCount * (data.pageNo - 1)); // 숫자로 변환
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
-        dbConn.query(sql, [data.keyword, data.keyword, data.pageNo, data.rowCount], function(err, results) {
+        dbConn.query(sql, [data.keyword, data.keyword, data.pageNo, data.rowCount], function (err, results) {
             dbConn.release();
             if (err) {
                 return callback(err);
             }
-            async.each(results, function(item, done) {
+            async.each(results, function (item, done) {
                 var filename = path.basename(item.image); // 사진이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
                 done(null);
@@ -319,6 +336,26 @@ function searchCookerStore(data, callback) {
         });
     });
 }
+/* 쿠커 후기 목록 조회 */
+function showCookerReview(data, callback) {
+    var sql_showCookerReview =
+        'select cooker_user_id id, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+        'from eater_review er join user u on (er.eater_user_id = u.id) ' +
+        'where eater_user_id = ?';
+    dbPool.getConnection(function (err, dbConn) {
+        if (err) {
+            dbConn.release();
+            return callback(err);
+        }
+        dbConn.query(sql_showCookerReview, [data.id], function (err, results) {
+            dbConn.release();
+            if (err) {
+                return callback(err);
+            }
+            callback(null, results);
+        });
+    });
+}
 module.exports.showCookerInfo = showCookerInfo;
 module.exports.updateCookerInfo = updateCookerInfo;
 module.exports.showCookerStore = showCookerStore;
@@ -326,3 +363,4 @@ module.exports.showCookerMenu = showCookerMenu;
 module.exports.showCookerSchedule = showCookerSchedule;
 module.exports.showCookerStoreList = showCookerStoreList;
 module.exports.searchCookerStore = searchCookerStore;
+module.exports.showCookerReview = showCookerReview;

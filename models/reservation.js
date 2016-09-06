@@ -1,9 +1,15 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
+var path = require('path');
+var url = require('url');
+var fs = require('fs');
+
 /* 예약 생성 */
 function createReservation(data, callback) {
-    var sql = 'insert into reservation (eater_user_id, cooker_user_id, schedule_id, menu_id, pax, status) ' +
-              'values (?, ?, ?, ?, ?, 1)';
+    var sql =
+        'insert into reservation (eater_user_id, cooker_user_id, schedule_id, menu_id, pax, status) ' +
+        'values (?, ?, ?, ?, ?, 1)';
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -36,9 +42,22 @@ function createReservation(data, callback) {
 }
 /* 예약 조회 */
 function showReservation(data, callback) {
-    var sql_selectUserType = 'select type from user where id = ?';
-    var sql_reservationOfCooker = 'select * from reservation where cooker_user_id = ?';
-    var sql_reservationOfEater = 'select * from reservation where eater_user_id = ?';
+    var sql_selectUserType =
+        'select type from user where id = ?';
+    var sql_reservationOfCooker =
+        'select u.id uid, u.name uname, u.image uimage, c.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
+        'from reservation r join schedule s on (r.schedule_id = s.id) ' +
+                           'join menu m on (r.menu_id = m.id) ' +
+                           'join user u on (r.cooker_user_id = u.id) ' +
+                           'join cooker c on (u.id = c.user_id) ' +
+        'where u.id = ?';
+    var sql_reservationOfEater =
+        'select u.id uid, u.name uname, u.image uimage, e.grade, r.id rid, date_format(s.date, \'%Y/%m/%d %H:%i\') sdate, r.pax rpax, r.status rstatus, m.name mname ' +
+        'from reservation r join schedule s on (r.schedule_id = s.id) ' +
+                           'join menu m on (r.menu_id = m.id) ' +
+                           'join user u on (r.eater_user_id = u.id) ' +
+                           'join eater e on (u.id = e.user_id) ' +
+        'where u.id = ?';
 
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
@@ -73,6 +92,11 @@ function showReservation(data, callback) {
                         if (err) {
                             return callback(err);
                         }
+                        async.each(results, function(item, done) {
+                            var filename = path.basename(item.uimage); // 사진이름
+                            item.uimage = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            done(null);
+                        });
                         callback(null, results);
                     });
                 } else if (type === 'eater') {
@@ -80,6 +104,11 @@ function showReservation(data, callback) {
                         if (err) {
                             return callback(err);
                         }
+                        async.each(results, function(item, done) {
+                            var filename = path.basename(item.uimage); // 사진이름
+                            item.uimage = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            done(null);
+                        });
                         callback(null, results);
                     });
                 }
@@ -89,9 +118,11 @@ function showReservation(data, callback) {
 }
 /* 예약 수정 */
 function updateReservation(data, callback) {
-    var sql = 'update reservation ' +
-              'set status = ? ' +
-              'where schedule_id = ?';
+    var sql =
+        'update reservation ' +
+        'set status = ? ' +
+        'where schedule_id = ?';
+
     dbPool.getConnection(function(err, dbConn) {
         dbConn.query(sql, [data.status, data.schedule], function (err, result) {
             dbConn.release();

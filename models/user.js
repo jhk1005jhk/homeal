@@ -76,6 +76,7 @@ function registerUser(newUser, callback) {
         }
         dbConn.beginTransaction(function(err) {
            if (err) {
+               dbConn.release();
                return callback(err);
            }
            // type 구분 처리
@@ -111,7 +112,6 @@ function registerUser(newUser, callback) {
             dbConn.query(sql_registerUser,
                 [newUser.gender, newUser.birth, newUser.country,
                     newUser.phone, newUser.introduce, newUser.type, newUser.facebook_id], function(err, result) {
-                    dbConn.release();
                     if (err) {
                         return callback(err);
                     }
@@ -120,7 +120,6 @@ function registerUser(newUser, callback) {
         }
         function registerCooker(callback) {
             dbConn.query(sql_registerCooker, [newUser.id], function(err, result) {
-                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
@@ -129,7 +128,6 @@ function registerUser(newUser, callback) {
         }
         function registerEater(callback) {
             dbConn.query(sql_registerEater, [newUser.id], function(err, result) {
-                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
@@ -221,8 +219,7 @@ function FB_findOrCreate(profile, callback) {
         dbConn.query(sql_find_facebookid, [profile.id], function(err, results) {
             dbConn.release();
             if (err) {
-                dbConn.release();
-                return callback(err);
+                return callback(0);
             }
             // profile.id 가 있다면 반환
             if (results.length !== 0) {
@@ -235,7 +232,6 @@ function FB_findOrCreate(profile, callback) {
             }
             // profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
             dbConn.query(sql_create_facebookid, [profile.emails[0].value, profile.photos[0].value, profile.displayName, profile.id], function (err, result) {
-                dbConn.release();
                 if (err)
                     return callback(err);
                 var user = {};
@@ -262,23 +258,23 @@ function deleteUser(deleteUserId, callback) {
         }
         async.waterfall([selectUserType, deleteUser], function(err, results) {
             if (err) {
-                console.log(err);
+                callback(err);
             } else {
-                console.log(results);
+                callback(results);
             }
         });
 
         function selectUserType(callback) {
             dbConn.query(sql_selectUserType, [deleteUserId.id], function(err, results) {
                 if (err) {
-                    return console.log(err);
+                    return callback(err);
                 }
                 callback(null, results[0].type); // 배열로 넘어오니까 [0]
             });
         }
 
         function deleteUser(type, callback) {
-            console.log(type);
+            callback(type);
             if (type === 'cooker') {
                 dbConn.beginTransaction(function(err) {
                     if (err) {

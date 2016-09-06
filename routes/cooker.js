@@ -67,9 +67,10 @@ router.get('/:id', isAuthenticated, function(req, res, next) {
         res.send({
             code: 1,
             message: message,
-            cooker_info: results[0],
-            cooker_menu: results[1],
-            cooker_schedule: results[2]
+            cooker_thumbnail : results[0],
+            cooker_info: results[1],
+            cooker_menu: results[2],
+            cooker_schedule: results[3]
         });
     });
 });
@@ -92,9 +93,9 @@ router.get('/', isAuthenticated, function(req, res, next) {
                 result: results
             });
         });
-    /* 쿠커 섬네일 페이지 목록 조회 */
+    /* 쿠커 섬네일 목록 조회 */
     } else if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
-        var message = "쿠커 페이지 목록 조회 완료";
+        var message = "쿠커 섬네일 목록 조회 완료";
         data = {};
         data.pageNo = req.query.pageNo;
         data.rowCount = req.query.rowCount;
@@ -103,18 +104,16 @@ router.get('/', isAuthenticated, function(req, res, next) {
             if (err) {
                 return next(err);
             }
-            var data = {};
-            data.storeList = results;
             res.send({
                 code: 1,
                 message: message,
-                results: data
+                result: results
             });
         });
     }
 });
 /* 쿠커 메뉴 목록 조회 */
-router.get('/:id/menus', function(req, res, next) {
+router.get('/:id/menus', isAuthenticated, function(req, res, next) {
     var message = '쿠커 메뉴 조회 완료';
     var data = {};
     data.id = req.params.id;
@@ -122,17 +121,15 @@ router.get('/:id/menus', function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var data = {};
-        data.menus = results;
         res.send({
             code: 1,
             message: message,
-            results: data
+            result: results
         });
     });
 });
 /* 쿠커 일정 목록 조회 */
-router.get('/:id/schedules', function(req, res, next) {
+router.get('/:id/schedules', isAuthenticated, function(req, res, next) {
     var message = '쿠커 일정 목록 조회';
     var data = {};
     data.id = req.params.id;
@@ -140,28 +137,30 @@ router.get('/:id/schedules', function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var data = {};
-        data.schedules = results;
         res.send({
             code: 1,
             message: message,
-            results: data
+            result: results
         });
     });
 });
-
-/* 후기 조회 */
-router.get('/:id/reviews', function(req, res, next) {
+/* 쿠커 후기 조회 */
+router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
     var id = req.params.id;
-    var message = "예약 목록 조회 완료";
-    var pageNo = req.query.pageNo;
-    var rowCount = req.query.rowCount;
-    res.send({
-        code: 1,
-        id: id,
-        message: message,
-        pageNo: pageNo,
-        rowCount: rowCount
+    var message = "쿠커 후기 조회 완료";
+    var data = {};
+    data.id = id;
+    Cooker.showCookerReview(data, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        var data = {};
+        data.reviews = results;
+        res.send({
+            code: 1,
+            message: message,
+            result: data
+        });
     });
 });
 module.exports = router;

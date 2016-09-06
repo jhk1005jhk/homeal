@@ -15,7 +15,8 @@ var path = require('path');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || 80);
+var https_port = normalizePort(process.env.HTTPS_PORT || 443);
 app.set('port', port);
 
 /**
@@ -39,8 +40,8 @@ httpServer.listen(port);
 httpServer.on('error', onError);
 httpServer.on('listening', onListening);
 
-httpsServer.listen(4433, function () {
-  console.log("HTTPS Listening on 4433");
+httpsServer.listen(https_port, function () {
+  console.log("HTTPS Listening on " + https_port);
 });
 /**
  * Normalize a port into a number, string, or false.
@@ -64,6 +65,10 @@ function normalizePort(val) {
 /**
  * Event listener for HTTP httpServer "error" event.
  */
+
+// process.on('uncaughtException', function(err) {
+//   console.log(err)
+// });
 
 function onError(error) {
   if (error.syscall !== 'listen') {
