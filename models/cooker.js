@@ -33,6 +33,10 @@ function showCookerInfo(data, callback) {
 function updateCookerInfo(data, callback) {
     var sql_selectDeleteFilePath =
         'select image from user where id = ?'; // 지울 사진 경로
+    var sql_selectCookerInfo =
+        'select image, name, gender, birth, country, phone, introduce, address ' +
+        'from user u join cooker c on (u.id = c.user_id) ' +
+        'where u.id = ?';
     var sql_updateUserInfo =
         'update user ' +
         'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
@@ -52,57 +56,115 @@ function updateCookerInfo(data, callback) {
                 dbConn.release();
                 return callback(err);
             }
-            async.series([deleteFile, updateUserInfo, updateCookerInfo], function(err) {
+            async.waterfall([selectCookerInfo, updateUserInfo], function (err) {
                 dbConn.release();
                 if (err) {
-                    return dbConn.rollback(function() {
-                        callback(err);
-                    });
+                    return callback(err);
                 }
                 dbConn.commit(function() {
-                    callback(null, data);
-                });
-            });
-            /* 사진 삭제 */
-            function deleteFile(callback) {
-                dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    var filename = path.basename(results[0].image); // 사진이름
-                    // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
-                    if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단, 페북 사진 아니면 실행
-                        fs.unlink(results[0].image, function (err) {
-                            if (err) {
-                                return callback(err);
-                            }
-                        });
-                    }
                     callback(null);
                 });
+            });
+        });
+        /* 쿠커 원래 정보 조회*/
+        function selectCookerInfo(callback) {
+            dbConn.query(sql_selectCookerInfo, [data.id], function(err, results) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, results[0]);
+            });
+        }
+        /* 쿠커 정보 업데이트 */
+        function updateUserInfo(originalData, callback) {
+            data.name = data.name || originalData.name;
+            data.gender = data.gender || originalData.gender;
+            data.birth = data.birth || originalData.birth;
+            data.country = data.country || originalData.country;
+            data.phone = data.phone || originalData.name;
+            data.introduce = data.introduce || originalData.introduce;
+            data.address = data.address || originalData.address;
+
+            if (data.image === undefined) {
+                data.image = originalData.image;
+
+                dbConn.beginTransaction(function(err) {
+                    if (err) {
+                        dbConn.release();
+                        return callback(err);
+                    }
+                    async.series([newUserInfo, newCookerInfo], function(err) {
+                        if (err) {
+                            return dbConn.rollback(function () {
+                                callback(err);
+                            });
+                        }
+                        dbConn.commit(function() {
+                            callback(null);
+                        });
+                    });
+                });
+            } else {
+                data.image = data.image.path;
+
+                dbConn.beginTransaction(function(err) {
+                    if (err) {
+                        dbConn.release();
+                        return callback(err);
+                    }
+                    async.series([deleteFile, newUserInfo, newCookerInfo], function(err) {
+                        if (err) {
+                            return dbConn.rollback(function () {
+                                callback(err);
+                            });
+                        }
+                        dbConn.commit(function() {
+                            callback(null);
+                        });
+                    });
+                });
             }
-            /* 공통 정보 업데이트 (사진 경로 업데이트 포함) */
-            function updateUserInfo(callback) {
-                dbConn.query(sql_updateUserInfo,
-                    [data.image, data.name, data.gender, data.birth, data.country,
-                        data.phone, data.introduce, data.id], function (err, result) {
+        }
+        /* 사진 삭제 */
+        function deleteFile(callback) {
+            dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
+                if (err) {
+                    return callback(err);
+                }
+                async.parallel()
+                var filename = path.basename(results[0].image); // 사진이름
+                // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
+                if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단, 페북 사진 아니면 실행
+                    fs.unlink(results[0].image, function (err) {
                         if (err) {
                             return callback(err);
                         }
-                        callback(null);
-                });
-            }
-            /* 쿠커 정보 업데이트 */
-            function updateCookerInfo(callback) {
-                dbConn.query(sql_updateCookerInfo, [data.address, data.id], function (err, result) {
+                    });
+                }
+                callback(null);
+            });
+        }
+        /* 공통 정보 업데이트 (사진 경로 업데이트 포함) */
+        function newUserInfo(callback) {
+            dbConn.query(sql_updateUserInfo,
+                [data.image, data.name, data.gender, data.birth, data.country,
+                    data.phone, data.introduce, data.id], function (err, result) {
                     if (err) {
                         return callback(err);
                     }
                     callback(null);
-                });
-            }
-        });
-    })
+            });
+        }
+        /* 쿠커 정보 업데이트 */
+        function newCookerInfo(callback) {
+            dbConn.query(sql_updateCookerInfo, [data.address, data.id], function (err, result) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
+        }
+    });
 }
 /* 쿠커 가게 페이지 조회 */
 function showCookerStore(data, callback) {

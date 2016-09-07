@@ -46,11 +46,12 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
         if (err) {
             return next(err)
         }
+        // undefined 가 들어오면 원래 데이터를 넣고, undefined 면 넘어온 데이터를 넣는다.
         var message = '쿠커 메뉴 수정 완료';
         var data = {};
         data.id = req.params.id;
         data.name = fields.name;
-        data.image = files.image.path;
+        data.image = files.image;
         data.price = parseInt(fields.price, 10);
         data.introduce = fields.introduce;
         data.currency = parseInt(fields.currency, 10);

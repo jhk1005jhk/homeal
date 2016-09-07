@@ -33,10 +33,10 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var message = '쿠커 정보 수정 완료';
+        var message = '쿠커 개인정보 수정 완료';
         var data = {};
         data.id = req.user.id;
-        data.image = files.image.path;
+        data.image = files.image;
         data.name = fields.name;
         data.gender = fields.gender;
         data.birth = fields.birth;
@@ -134,7 +134,6 @@ router.get('/:id/photos', isAuthenticated, function(req, res, next) {
         });
     })
 });
-
 /* 쿠커 메뉴 목록 조회 */
 router.get('/:id/menus', isAuthenticated, function(req, res, next) {
     var message = '쿠커 메뉴 조회 완료';
@@ -184,4 +183,5 @@ router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
         });
     });
 });
+
 module.exports = router;

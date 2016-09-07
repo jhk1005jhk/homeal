@@ -35,7 +35,7 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
         var message = '잇터 개인정보 수정 완료';
         var data = {};
         data.id = req.user.id;
-        data.image = files.image.path;
+        data.image = files.image;
         data.name = fields.name;
         data.gender = fields.gender;
         data.birth = fields.birth;
