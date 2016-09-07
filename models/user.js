@@ -14,6 +14,7 @@ function findByEmail(email, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, findUser], function(err, results) {
@@ -73,6 +74,7 @@ function registerUser(newUser, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
@@ -151,6 +153,7 @@ function showUser(showUser, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, selectUser], function(err, results) {
@@ -216,8 +219,10 @@ function FB_findOrCreate(profile, callback) {
     var sql_create_facebookid = 'insert into user(email, image, name, facebook_id) values(?, ?, ?, ?)';
 
     dbPool.getConnection(function(err, dbConn) {
-        if (err)
+        if (err) {
+            dbConn.release();
             return callback(err);
+        }
         // homealdb에 facebook_id(profile.id)가 있는지 확인
         dbConn.query(sql_find_facebookid, [profile.id], function(err, results) {
             dbConn.release();
@@ -256,9 +261,11 @@ function deleteUser(deleteUserId, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, deleteUser], function(err, results) {
+            dbConn.release();
             if (err) {
                 callback(err);
             } else {
@@ -276,7 +283,6 @@ function deleteUser(deleteUserId, callback) {
         }
 
         function deleteUser(type, callback) {
-            callback(type);
             if (type === 'cooker') {
                 dbConn.beginTransaction(function(err) {
                     if (err) {

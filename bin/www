@@ -65,11 +65,6 @@ function normalizePort(val) {
 /**
  * Event listener for HTTP httpServer "error" event.
  */
-
-// process.on('uncaughtException', function(err) {
-//   console.log(err)
-// });
-
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error;
@@ -105,3 +100,9 @@ function onListening() {
       : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+// process.on('uncaughtException', function(err) {
+//   if (err) {
+//     console.log(err);
+//   }
+// });

@@ -55,7 +55,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
         });
     });
 });
-/* 쿠커 페이지 조회 */
+/* 쿠커 가게 페이지 조회 */
 router.get('/:id', isAuthenticated, function(req, res, next) {
     var message = "쿠커 페이지 조회 완료";
     var data = {};
@@ -75,7 +75,7 @@ router.get('/:id', isAuthenticated, function(req, res, next) {
         });
     });
 });
-/* 쿠커 섬네일 검색 & 쿠커 섬네일 목록 조회 */
+/* 쿠커 섬네일 페이지 검색 & 쿠커 섬네일 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
     /* 쿠커 섬네일 페이지 검색 */
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
@@ -84,6 +84,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
         data.keyword = req.query.keyword;
         data.pageNo = req.query.pageNo;
         data.rowCount = req.query.rowCount;
+
         Cooker.searchCookerStore(data, function(err, results) {
             if (err) {
                 return next(err);
@@ -117,6 +118,23 @@ router.get('/', isAuthenticated, function(req, res, next) {
         });
     }
 });
+/* 쿠커 포토 목록 조회 */
+router.get('/:id/photos', isAuthenticated, function(req, res, next) {
+    var message = '사진 목록 조회 완료';
+    var data = {};
+    data.id = req.params.id;
+    Cooker.showCookerPhoto(data, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            code: 1,
+            message: message,
+            result: results
+        });
+    })
+});
+
 /* 쿠커 메뉴 목록 조회 */
 router.get('/:id/menus', isAuthenticated, function(req, res, next) {
     var message = '쿠커 메뉴 조회 완료';
@@ -135,7 +153,7 @@ router.get('/:id/menus', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 일정 목록 조회 */
 router.get('/:id/schedules', isAuthenticated, function(req, res, next) {
-    var message = '쿠커 일정 목록 조회';
+    var message = '쿠커 일정 목록 조회 완료';
     var data = {};
     data.id = req.params.id;
     Cooker.showCookerSchedule(data, function(err, results) {

@@ -23,6 +23,7 @@ function deleteSchedule(data, callback) {
     var sql = 'delete from schedule where id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, result) {

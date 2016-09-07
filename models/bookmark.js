@@ -16,6 +16,7 @@ function createBookmark(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.parallel([createBookmark, updateBookmarkCount], function(err, results) {
@@ -48,18 +49,21 @@ function createBookmark(data, callback) {
 }
 /* 찜 조회 */
 function showBookmark(data, callback) {
-    var sql = 'select u.id cid, i.image thumbnail, u.image, u.name name, c.address, u.introduce, accumulation, reviewCnt, bookmarkCnt, grade  ' +
-              'from cooker c join bookmark b on (c.user_id = b.cooker_user_id) ' +
-                            'join user u on (c.user_id = c.user_id) ' +
-                            'join image i on (c.user_id = i.cooker_user_id) ' +
-              'where b.eater_user_id = ? ' +
-              'group by user_id';
+    var sql_showBookmark =
+        'select u.id cid, p.image thumbnail, u.image, u.name name, c.address, u.introduce, accumulation, reviewCnt, bookmarkCnt, grade ' +
+        'from cooker c join bookmark b on (c.user_id = b.cooker_user_id) ' +
+        'join user u on (c.user_id = u.id) ' +
+        'join photo p on (c.user_id = p.cooker_user_id) ' +
+        'where b.eater_user_id = ? ' +
+        'group by u.id';
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
-        dbConn.query(sql, [data.id], function(err, results) {
+        dbConn.query(sql_showBookmark, [data.id], function(err, results) {
+            dbConn.release();
             if (err) {
                 return callback(err);
             }
@@ -86,9 +90,9 @@ function deleteBookmark(data, callback) {
         'where user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
-
         async.parallel([deleteBookmark, updateBookmarkCount], function(err, results) {
             dbConn.release();
             if (err) {

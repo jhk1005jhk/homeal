@@ -1,7 +1,5 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
-var path = require('path');
-var url = require('url');
 var fs = require('fs');
 
 /* 메뉴 생성 */
@@ -11,6 +9,7 @@ function createMenu(data, callback) {
         'values (?, ?, ?, ?, ?, ?, ?)';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_createMenu, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation], function(err, result) {
@@ -33,10 +32,12 @@ function updateMenu(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
             if (err) {
+                dbConn.release();
                 return callback(err);
             }
             async.series([deleteFile, updateMenuInfo], function(err) {
@@ -83,14 +84,16 @@ function deleteMenu(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_deleteMenu, [data.id], function(err, result) {
-                if (err) {
-                    return console.log(err);
-                }
-                callback(null);
-            });
+            dbConn.release();
+            if (err) {
+                return console.log(err);
+            }
+            callback(null);
+        });
     });
 }
 

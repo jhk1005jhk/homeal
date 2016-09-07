@@ -21,7 +21,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 });
 /* 잇터 찜 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
-    var message = "찜 조회 완료";
+    var message = "찜 목록 조회 완료";
     var data = {};
     data.id = req.user.id;
     Bookmark.showBookmark(data, function(err, results) {
@@ -37,7 +37,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 });
 /* 잇터 찜 삭제 */
 router.delete('/:id', isAuthenticated, function(req, res, next) {
-    var message = '잇터 찜 삭제 완료';
+    var message = '찜 삭제 완료';
     var data = {};
     data.eater = req.user.id;
     data.cooker = req.params.id;

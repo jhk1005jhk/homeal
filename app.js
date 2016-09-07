@@ -16,12 +16,14 @@ var chatting = require('./routes/chatting');
 var user = require('./routes/user');
 var cooker = require('./routes/cooker');
 var eater = require('./routes/eater');
-var notice = require('./routes/notice');
+var notification = require('./routes/notification');
 var reservation = require('./routes/reservation');
 var review = require('./routes/review');
 var menu = require('./routes/menu');
 var schedule = require('./routes/schedule');
 var bookmark = require('./routes/bookmark');
+var setting = require('./routes/setting');
+var photo = require('./routes/photo');
 
 var app = express();
 
@@ -58,12 +60,14 @@ app.use('/users', user);
 app.use('/cookers', cooker);
 app.use('/eaters', eater);
 app.use('/chattings', chatting);
-app.use('/notices', notice);
+app.use('/notifications', notification);
 app.use('/reservations', reservation);
 app.use('/reviews', review);
 app.use('/menus', menu);
 app.use('/schedules', schedule);
 app.use('/bookmarks', bookmark);
+app.use('/settings', setting);
+app.use('/photos', photo);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

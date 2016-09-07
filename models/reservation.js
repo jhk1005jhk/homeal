@@ -12,6 +12,7 @@ function createReservation(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         if (data.menu instanceof Array) {
@@ -23,15 +24,17 @@ function createReservation(data, callback) {
                     done(null);
                 });
             }, function (err) { // done callback
-                dbConn.release();
                 if (err) {
-                    callback(err);
+                    dbConn.release();
+                    return callback(err);
                 }
+                dbConn.release();
                 callback(null);
             });
         } else { // 메뉴 1개 예약
             dbConn.query(sql, [data.eater, data.cooker, data.schedule, data.menu, data.pax], function(err, result) {
                 if (err) {
+                    dbConn.release();
                     return callback(err);
                 }
                 dbConn.release();
@@ -94,7 +97,9 @@ function showReservation(data, callback) {
                         }
                         async.each(results, function(item, done) {
                             var filename = path.basename(item.uimage); // 사진이름
-                            item.uimage = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            }
                             done(null);
                         });
                         callback(null, results);
@@ -118,19 +123,75 @@ function showReservation(data, callback) {
 }
 /* 예약 수정 */
 function updateReservation(data, callback) {
-    var sql =
+    var sql_updateReservation =
         'update reservation ' +
         'set status = ? ' +
         'where schedule_id = ?';
+    var sql_updateSchedule_DecreasePax =
+        'update schedule ' +
+        'set pax = pax - (select pax from reservation where schedule_id = ?)' +
+        'where id = ?';
+    var sql_updateSchedule_IncreasePax =
+        'update schedule ' +
+        'set pax = pax + (select pax from reservation where schedule_id = ?)' +
+        'where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
-        dbConn.query(sql, [data.status, data.schedule], function (err, result) {
-            dbConn.release();
-            if (err) {
-                return callback(err);
+        // 예약이 승인 되었을 경우, 쿠커 일정 예약 가능 인원 감소
+        if (parseInt(data.status) === 2) {
+            async.parallel([updateReservation, updateSchedulePax], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
+        // 예약이 취소 될 경우, 쿠커 일정 예약 가능 인원 증가
+        } else if (parseInt(data.status) === 4 || parseInt(data.status) === 5) {
+            async.parallel([updateReservation, updateSchedulePax], function(err, results) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
+        } else {
+            dbConn.query(sql_updateReservation, [data.status, data.schedule], function (err, result) {
+                dbConn.release();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
+        }
+        // 쿠커 예약 상태 변경
+        function updateReservation(callback) {
+            dbConn.query(sql_updateReservation, [data.status, data.schedule], function (err, result) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
+        }
+        // 일정 예약 가능인원 업데이트
+        function updateSchedulePax(callback) {
+            // 승인
+            if (parseInt(data.status) === 2) {
+                dbConn.query(sql_updateSchedule_DecreasePax, [data.schedule, data.schedule], function (err, result) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null);
+                });
+            } else { // 쿠커 취소, 잇터 취소
+                dbConn.query(sql_updateSchedule_IncreasePax, [data.schedule, data.schedule], function (err, result) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null);
+                });
             }
-            callback(null);
-        });
+        }
     });
 }
 

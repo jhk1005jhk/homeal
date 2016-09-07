@@ -32,6 +32,7 @@ function createReview(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
+            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, createReview], function(err, result) {
