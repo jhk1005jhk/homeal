@@ -7,6 +7,7 @@ var FacebookTokenStrategy = require('passport-facebook-token');
 var User = require('../models/user');
 var isSecure = require('./common').isSecure;
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 //----------------------------------------------------------------------------------------------------------------------
 // 로컬 관련
@@ -98,10 +99,12 @@ passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
 /* access_token 받아오는 URL */
 router.get('/facebook', passport.authenticate('facebook', {scope: ['email']}));
 router.get('/facebook/callback', passport.authenticate('facebook'), function(req, res, next) { // Ok 하면, call URL 필요
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     res.send({ message: 'facebook callback' });
 });
 /* 페이스북 로그인 (access_token 매개변수로 넘겨줘야 함) */
 router.post('/facebook/token', isSecure, passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     res.send({
         code: 1,
         message: req.user? '페이스북 로그인 성공' : '페이스북 로그인 실패'
@@ -109,6 +112,7 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token',
 });
 /* 페이스북 로그아웃 */
 router.get('/logout', function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     req.logout();
     res.send({
         code: 1,

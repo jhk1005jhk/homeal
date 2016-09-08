@@ -35,33 +35,34 @@ function updateMenu(data, callback) {
         'where id = ?';
 
     dbPool.getConnection(function(err, dbConn) {
-        if (err) {
-            dbConn.release();
-            return callback(err);
-        }
-        dbConn.beginTransaction(function(err) {
-            if (err) {
-                dbConn.release();
-                return callback(err);
-            }
-            async.waterfall([selectMenuInfo, updateMenuInfo], function(err) {
-                dbConn.release();
-                if (err) {
-                    return callback(err);
-                }
-                callback(null);
-            });
-        });
-        /* 원래 메뉴 정보 셀렉트 */
+       if (err) {
+           dbConn.release();
+           return callback(err);
+       }
+       dbConn.beginTransaction(function(err) {
+           if (err) {
+               dbConn.release();
+               return callback(err);
+           }
+           async.waterfall([selectMenuInfo, updateMenuInfo], function(err) {
+               dbConn.release();
+               if (err) {
+                   return callback(err);
+               }
+               dbConn.commit(function() {
+                  callback(null);
+               });
+           });
+       });
+        /* 메뉴 원래 정보 조회*/
         function selectMenuInfo(callback) {
             dbConn.query(sql_selectMenuInfo, [data.id], function(err, results) {
-                if (err) {
-                    return callback(err);
-                }
-                callback(null, results[0]);
+               if (err) {
+                   return callback(err);
+               }
+               callback(null, results[0]);
             });
         }
-        // 메뉴 정보 업데이트
         function updateMenuInfo(originalData, callback) {
             data.name = data.name || originalData.name;
             data.price = data.price || originalData.price;
@@ -69,48 +70,56 @@ function updateMenu(data, callback) {
             data.currency = data.currency || originalData.currency;
             data.activation = data.activation || originalData.activation;
 
-            if (data.image === undefined) { // 사진이 변경되지 않았을 때 (새로운 메뉴 정보로 업데이트)
+            if (data.image === undefined) {
                 data.image = originalData.image;
 
-                dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function(err, result) {
+                dbConn.beginTransaction(function(err) {
                     if (err) {
+                        dbConn.release();
                         return callback(err);
                     }
-                    callback(null);
-                });
-            } else { // 사진이 변경 되었을 때
-                data.image = data.image.path;
-
-                async.series([deleteFile, newMenuInfo], function(err) { // 사진 파일을 지우고, 새로운 메뉴 정보로 업데이트
-                    if (err) {
-                        return dbConn.rollback(function() {
-                            callback(err);
-                        });
-                    }
-                    dbConn.commit(function() {
-                        callback(null);
-                    });
-                });
-            }
-            // 사진이 변경되었을 때 기존 사진 삭제
-            function deleteFile(callback) {
-                dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    console.log('지울 사진: ' + results[0].image);
-                    // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
-                    fs.unlink(results[0].image, function(err) {
+                    dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function (err, result) {
                         if (err) {
                             return callback(err);
                         }
                         callback(null);
                     });
                 });
+            } else {
+                data.image = data.image.path;
+
+                dbConn.beginTransaction(function(err) {
+                    if (err) {
+                        dbConn.release();
+                        return callback(err);
+                    }
+                    async.series([deleteFile, newMenuInfo], function(err) {
+                        if (err) {
+                            return dbConn.rollback(function () {
+                                callback(err);
+                            });
+                        }
+                        dbConn.commit(function() {
+                            callback(null);
+                        });
+                    });
+                });
             }
-            // 새로운 메뉴 정보로 업데이트
+            function deleteFile(callback) {
+                dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    fs.unlink(results[0].image, function(err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                    });
+                    callback(null);
+                });
+            }
             function newMenuInfo(callback) {
-                dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function(err, result) {
+                dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function (err, result) {
                     if (err) {
                         return callback(err);
                     }
@@ -130,10 +139,11 @@ function deleteMenu(data, callback) {
             dbConn.release();
             return callback(err);
         }
+        // 사진 삭제 처리
         dbConn.query(sql_deleteMenu, [data.id], function(err, result) {
             dbConn.release();
             if (err) {
-                return console.log(err);
+                return callback(err)
             }
             callback(null);
         });

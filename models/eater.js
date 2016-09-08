@@ -152,8 +152,8 @@ function updateEaterInfo(data, callback) {
 /* 잇터 후기 목록 조회 */
 function showEaterReview(data, callback) {
     var sql =
-        'select cooker_user_id id, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
-        'from eater_review er join user u on (er.eater_user_id = u.id) ' +
+        'select er.cooker_user_id cid, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+        'from eater_review er join user u on (er.cooker_user_id = u.id) ' +
         'where eater_user_id = ?';
 
     dbPool.getConnection(function(err, dbConn) {

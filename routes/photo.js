@@ -4,9 +4,11 @@ var Photo = require('../models/photo');
 var formidable = require('formidable');
 var path = require('path');
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 사진 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/thumbnails'); // __dirname 프로젝트 수행하는 경로
     form.keepExtensions = true;
@@ -41,6 +43,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 
 /* 사진 삭제 */
 router.delete('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '사진 삭제 완료';
     var data = {};
     data.cooker = req.user.id;

@@ -2,9 +2,11 @@ var express = require('express');
 var router = express.Router();
 var Bookmark = require('../models/bookmark');
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 잇터 찜 추가 */
 router.post('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '찜 추가 완료';
     var data = {};
     data.eater = req.user.id;
@@ -21,6 +23,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 });
 /* 잇터 찜 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = "찜 목록 조회 완료";
     var data = {};
     data.id = req.user.id;

@@ -59,7 +59,7 @@ app.use('/auth', auth);
 app.use('/users', user);
 app.use('/cookers', cooker);
 app.use('/eaters', eater);
-app.use('/chattings', chatting);
+app.use('/chatting', chatting);
 app.use('/notifications', notification);
 app.use('/reservations', reservation);
 app.use('/reviews', review);

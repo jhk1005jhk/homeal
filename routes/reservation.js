@@ -2,8 +2,11 @@ var express = require('express');
 var router = express.Router();
 var Reservation = require('../models/reservation');
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
+
 /* 예약 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '예약 요청 완료';
     var data = {};
     data.eater = req.user.id;
@@ -24,6 +27,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 });
 /* 예약 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '예약 목록 조회 완료';
     var data = {};
     data.id = req.user.id;
@@ -41,6 +45,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 });
 /* 예약 승인(2)/ 거절(3)/ 쿠커취소(4)/ 잇터취소(5)/ 후기쓰기(6)/ 식사 완료 (7) */
 router.put('/:id', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message;
     var code;
     var data = {};

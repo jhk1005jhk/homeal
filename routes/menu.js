@@ -4,9 +4,11 @@ var Menu = require('../models/menu');
 var formidable = require('formidable');
 var path = require('path');
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 메뉴 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/menus'); // __dirname 프로젝트 수행하는 경로
     form.keepExtensions = true;
@@ -38,6 +40,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
 });
 /* 메뉴 수정 */
 router.put('/:id', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/menus');
     form.keepExtensions = true;
@@ -69,6 +72,7 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
 });
 /* 메뉴 삭제 */
 router.delete('/:id', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '쿠커 메뉴 삭제 완료';
     var data = {};
     data.id = req.params.id;

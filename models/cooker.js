@@ -56,7 +56,7 @@ function updateCookerInfo(data, callback) {
                 dbConn.release();
                 return callback(err);
             }
-            async.waterfall([selectCookerInfo, updateUserInfo], function (err) {
+            async.waterfall([selectCookerInfo, updateUserInfo], function(err) {
                 dbConn.release();
                 if (err) {
                     return callback(err);
@@ -131,7 +131,6 @@ function updateCookerInfo(data, callback) {
                 if (err) {
                     return callback(err);
                 }
-                async.parallel()
                 var filename = path.basename(results[0].image); // 사진이름
                 // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
                 if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단, 페북 사진 아니면 실행
@@ -423,9 +422,9 @@ function searchCookerStore(data, callback) {
 /* 쿠커 후기 목록 조회 */
 function showCookerReview(data, callback) {
     var sql_showCookerReview =
-        'select cooker_user_id id, u.image, u.name, taste, price,cleanliness, kindness, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
-        'from cooker_review cr join user u on (cr.cooker_user_id = u.id) ' +
-        'where cooker_user_id = ?';
+        'select cr.eater_user_id eid, u.image, u.name, taste, price, cleanliness, kindness, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+        'from cooker_review cr join user u on (cr.eater_user_id = u.id) ' +
+        'where cr.cooker_user_id = ?';
 
     dbPool.getConnection(function (err, dbConn) {
         if (err) {

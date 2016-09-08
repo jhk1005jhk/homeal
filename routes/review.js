@@ -2,9 +2,11 @@ var express = require('express');
 var router = express.Router();
 var Review = require('../models/review');
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 후기 작성 */
 router.post('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     // 공통 ------------------------------------------------------------------------------------------------------------
     var message = '후기 작성 완료';
     var data = {};

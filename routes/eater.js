@@ -5,9 +5,11 @@ var formidable = require('formidable');
 var path = require('path');
 var isSecure = require('./common').isSecure;
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 잇터 정보 조회 */
 router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '잇터 내 정보 조회 완료';
     var data = {};
     data.id = req.user.id;
@@ -24,6 +26,7 @@ router.get('/me', isSecure, isAuthenticated, function (req, res, next) {
 });
 /* 잇터 정보 수정 */
 router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/users');
     form.keepExtensions = true;
@@ -55,6 +58,7 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
 });
 /* 잇터 후기 조회 */
 router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var id = req.params.id;
     var message = "잇터 후기 조회 완료";
     var data = {};

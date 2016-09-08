@@ -2,38 +2,47 @@ var express = require('express');
 var router = express.Router();
 var fcm = require('node-gcm');
 var isAuthenticated = require('./common').isAuthenticated;
+var Chatting = require('../models/chatting');
+var logger = require('../common/logger');
+var fcm = require('node-gcm');
 
 /* 알림 전송 */
 router.post('/', function(req, res, next) {
-    var id = req.body.id;
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    var message = '메시지 전송 성공';
+    var data = {};
+    data.target = req.body.target;
 
-    // token을 select
-    // message를 insert
+// 받을 사람 토큰 가져오기
+    Chatting.selectRegistarionToken(data, function(err, result) {
+        var msg = fcm.Message({
+            data: {
+                key1: 'value'
+            },
+            notification: {
+                title: 'Homeal',
+                icon: 'ic_launcher',
+                body: 'We have new MESSAGE for you :)'
+            }
+        });
 
-    var token = null;
-    var message = fcm.Message({
-        data: { // 실제 날라갈 데이터
-            key1: 'value1',
-            key2: 'value2'
-        }, // 알림 창에 보일 것
-        notification: {
-            title: 'Homeal',
-            icon: 'ic_launcher',
-            body: 'We have new news for you :)'
-        }
-    });
-
-    var sender = new fcm.Sender('AIzaSyBRahrJR-2z0ADAKsAfcAfYaAK1GzYrVNY');
-    sender.send(message, {registrationTokens: token}, function(err, response) {
-        if (err) {
-            return next(err);
-        }
-        res.send(res);
+        var tokens = [];
+        var sender = new fcm.Sender(result); // sender 객체만들어서 보낸다
+        sender.send(msg, {registrationTokens: tokens}, function(err, response) {
+            if (err)
+                return next(err);
+            res.send({
+                code: 1,
+                message: message,
+                result: result
+            });
+        });
     });
 });
 
 /* 알림 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '알림 목록 조회 완료';
     if (req.url.match(/\/\?pageNo=\d+&rowCount=\d+/i)) {
         var pageNo = parseInt(req.query.pageNo, 10);
@@ -68,6 +77,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 
 /* 알림 목록 삭제 */
 router.delete('/', function (req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '알림 목록 삭제 완료';
     res.send({
         code: 1,

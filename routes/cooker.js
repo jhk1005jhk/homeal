@@ -5,9 +5,11 @@ var formidable = require('formidable');
 var path = require('path');
 var isSecure = require('./common').isSecure;
 var isAuthenticated = require('./common').isAuthenticated;
+var logger = require('../common/logger');
 
 /* 쿠커 정보 조회 */
 router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '쿠커 내 정보 조회 완료';
     var data = {};
     data.id = req.user.id;
@@ -25,6 +27,7 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 정보 수정 */
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
     form.uploadDir = path.join(__dirname, '../uploads/images/users');
     form.keepExtensions = true;
@@ -57,6 +60,7 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 가게 페이지 조회 */
 router.get('/:id', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = "쿠커 페이지 조회 완료";
     var data = {};
     data.id = req.params.id;
@@ -77,6 +81,7 @@ router.get('/:id', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 섬네일 페이지 검색 & 쿠커 섬네일 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     /* 쿠커 섬네일 페이지 검색 */
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
         var message = "쿠커 검색 완료";
@@ -120,6 +125,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 포토 목록 조회 */
 router.get('/:id/photos', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '사진 목록 조회 완료';
     var data = {};
     data.id = req.params.id;
@@ -136,6 +142,7 @@ router.get('/:id/photos', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 메뉴 목록 조회 */
 router.get('/:id/menus', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '쿠커 메뉴 조회 완료';
     var data = {};
     data.id = req.params.id;
@@ -152,6 +159,7 @@ router.get('/:id/menus', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 일정 목록 조회 */
 router.get('/:id/schedules', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '쿠커 일정 목록 조회 완료';
     var data = {};
     data.id = req.params.id;
@@ -168,6 +176,7 @@ router.get('/:id/schedules', isAuthenticated, function(req, res, next) {
 });
 /* 쿠커 후기 조회 */
 router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var id = req.params.id;
     var message = "쿠커 후기 조회 완료";
     var data = {};
