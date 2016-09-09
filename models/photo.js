@@ -1,15 +1,15 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 var fs = require('fs');
-
+/* 대표사진 생성 */
 function createPhoto(data, callback) {
     var sql_createPhoto =
         'insert into photo (cooker_user_id, image) ' +
         'values (?, ?)';
 
+    dbPool.logStatus();
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.each(data.photos, function(item, done) {
@@ -21,34 +21,30 @@ function createPhoto(data, callback) {
             });
         }, function(err) {
             if (err) {
-                dbConn.release();
                 return callback(err);
             }
             dbConn.release();
+            dbPool.logStatus();
             callback(null);
         });
     });
 }
-
-/* 사진 삭제 */
+/* 대표 사진 삭제 */
 function deletePhoto(data, callback) {
-    var sql_deletePhotoPath =
-        'select image from photo where cooker_user_id = ?';
-    var sql_deletePhoto =
-        'delete from photo where id = ?';
+    var sql_selectDeleteFilePath = 'select image from photo where id = ?';
+    var sql_deletePhoto = 'delete from photo where id = ?';
 
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
+        dbConn.release();
+        dbPool.logStatus();
         dbConn.beginTransaction(function(err) {
            if (err) {
-               dbConn.release();
                return callback(err);
            }
-           async.series([deletePhotoPath, deletePhoto], function(err) {
-               dbConn.release();
+           async.series([deleteFile, deletePhoto], function(err) {
                if (err) {
                    return dbConn.rollback(function() {
                        callback(err);
@@ -60,26 +56,25 @@ function deletePhoto(data, callback) {
            });
         });
 
-        function deletePhotoPath(callback) {
-                dbConn.query(sql_deletePhotoPath, [data.cooker], function(err, results) {
+        function deleteFile(callback) {
+            async.each(data.ids, function(item, done) {
+                dbConn.query(sql_selectDeleteFilePath, [item], function(err, results) {
                     if (err) {
                         return callback(err);
                     }
-                    async.each(results, function(item, done) {
-                        // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
-                        fs.unlink(item.image, function (err) {
-                            if (err) {
-                                return done(err);
-                            }
-                            done(null);
-                        });
-                    }, function(err) {
+                    fs.unlink(results[0].image, function (err) {
                         if (err) {
-                            return callback(err);
+                            return done(err);
                         }
-                        callback(null);
+                        done(null);
                     });
                 });
+            }, function(err) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
         }
 
         function deletePhoto(callback) {

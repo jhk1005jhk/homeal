@@ -1,3 +1,4 @@
+/* 인증된 사용자인지 확인 */
 function isAuthenticated(req, res, next) {
     if (!req.user) {
         return res.status(401).send({
@@ -6,6 +7,7 @@ function isAuthenticated(req, res, next) {
     }
     next();
 }
+/* HTTPS 접속인지 확인 */
 function isSecure(req, res, next) {
     if (!req.secure) {
         return res.status(426).send({

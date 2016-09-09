@@ -6,7 +6,7 @@ var path = require('path');
 var isAuthenticated = require('./common').isAuthenticated;
 var logger = require('../common/logger');
 
-/* 사진 생성 */
+/* 대표 사진 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
@@ -41,7 +41,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
     });
 });
 
-/* 사진 삭제 */
+/* 대표 사진 삭제 */
 router.delete('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message = '사진 삭제 완료';

@@ -30,13 +30,14 @@ function createReview(data, callback) {
                        'where eater_user_id = ?) ' +
         'where u.id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, createReview], function(err, result) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 callback(err);
             } else {

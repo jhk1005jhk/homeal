@@ -29,8 +29,8 @@ router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
 router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var form = new formidable.IncomingForm();
-    form.uploadDir = path.join(__dirname, '../uploads/images/users');
-    form.keepExtensions = true;
+    form.uploadDir = path.join(__dirname, '../uploads/images/users'); // 업로드 경로
+    form.keepExtensions = true; // 확장자 유지
 
     form.parse(req, function(err, fields, files) {
         if (err) {
@@ -82,10 +82,12 @@ router.get('/:id', isAuthenticated, function(req, res, next) {
 /* 쿠커 섬네일 페이지 검색 & 쿠커 섬네일 목록 조회 */
 router.get('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    var message;
+    var data = {};
+
     /* 쿠커 섬네일 페이지 검색 */
     if (req.url.match(/\?keyword=\w*&pageNo=\d+&rowCount=\d+/i)) {
-        var message = "쿠커 검색 완료";
-        var data = {};
+        message = '쿠커 검색 완료';
         data.keyword = req.query.keyword;
         data.pageNo = req.query.pageNo;
         data.rowCount = req.query.rowCount;
@@ -104,7 +106,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
         });
     /* 쿠커 섬네일 목록 조회 */
     } else if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
-        var message = "쿠커 섬네일 목록 조회 완료";
+        message = '쿠커 섬네일 목록 조회 완료';
         data = {};
         data.pageNo = req.query.pageNo;
         data.rowCount = req.query.rowCount;

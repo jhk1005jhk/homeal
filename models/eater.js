@@ -11,13 +11,14 @@ function showEaterInfo(data, callback) {
         'from user u join eater e on (u.id = e.user_id) ' +
         'where user_id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_showEaterInfo, [data.id], function(err, results) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
@@ -42,18 +43,18 @@ function updateEaterInfo(data, callback) {
         'set image = ?, name = ?, gender = ?, birth = ?, country = ?, phone = ?, introduce = ? ' +
         'where id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
-                dbConn.release();
                 return callback(err);
             }
             async.waterfall([selectEaterInfo, updateUserInfo], function (err) {
-                dbConn.release();
                 if (err) {
                     return callback(err);
                 }
@@ -85,7 +86,6 @@ function updateEaterInfo(data, callback) {
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     dbConn.query(sql_updateUserInfo,
@@ -102,7 +102,6 @@ function updateEaterInfo(data, callback) {
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     async.series([deleteFile, newUserInfo], function (err) {
@@ -156,13 +155,14 @@ function showEaterReview(data, callback) {
         'from eater_review er join user u on (er.cooker_user_id = u.id) ' +
         'where eater_user_id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }

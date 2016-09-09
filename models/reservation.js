@@ -10,9 +10,9 @@ function createReservation(data, callback) {
         'insert into reservation (eater_user_id, cooker_user_id, schedule_id, menu_id, pax, status) ' +
         'values (?, ?, ?, ?, ?, 1)';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         if (data.menu instanceof Array) {
@@ -29,6 +29,7 @@ function createReservation(data, callback) {
                     return callback(err);
                 }
                 dbConn.release();
+                dbPool.logStatus();
                 callback(null);
             });
         } else { // 메뉴 1개 예약
@@ -38,6 +39,7 @@ function createReservation(data, callback) {
                     return callback(err);
                 }
                 dbConn.release();
+                dbPool.logStatus();
                 callback(null, result);
             });
         }
@@ -62,6 +64,7 @@ function showReservation(data, callback) {
                            'join eater e on (u.id = e.user_id) ' +
         'where u.id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
             return callback(err);
@@ -74,12 +77,13 @@ function showReservation(data, callback) {
                 if (err) {
                     callback(err);
                 } else {
+                    dbConn.release();
+                    dbPool.logStatus();
                     callback(null, results);
                 }
             });
             function selectUserType(callback) {
                 dbConn.query(sql_selectUserType, [data.id], function (err, results) {
-                    dbConn.release();
                     if (err) {
                         return callback(err);
                     }
@@ -111,7 +115,9 @@ function showReservation(data, callback) {
                         }
                         async.each(results, function(item, done) {
                             var filename = path.basename(item.uimage); // 사진이름
-                            item.uimage = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                            }
                             done(null);
                         });
                         callback(null, results);
@@ -136,11 +142,13 @@ function updateReservation(data, callback) {
         'set pax = pax + (select pax from reservation where schedule_id = ?)' +
         'where id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         // 예약이 승인 되었을 경우, 쿠커 일정 예약 가능 인원 감소
         if (parseInt(data.status) === 2) {
             async.parallel([updateReservation, updateSchedulePax], function(err, results) {
                 dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     return callback(err);
                 }
@@ -150,6 +158,7 @@ function updateReservation(data, callback) {
         } else if (parseInt(data.status) === 4 || parseInt(data.status) === 5) {
             async.parallel([updateReservation, updateSchedulePax], function(err, results) {
                 dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     return callback(err);
                 }
@@ -158,6 +167,7 @@ function updateReservation(data, callback) {
         } else {
             dbConn.query(sql_updateReservation, [data.status, data.schedule], function (err, result) {
                 dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     return callback(err);
                 }

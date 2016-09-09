@@ -14,13 +14,14 @@ function createBookmark(data, callback) {
         'set bookmarkCnt = bookmarkCnt + 1 ' +
         'where user_id = ?';
 
+
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.parallel([createBookmark, updateBookmarkCount], function(err, results) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 callback(err);
             } else {
@@ -59,11 +60,11 @@ function showBookmark(data, callback) {
 
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_showBookmark, [data.id], function(err, results) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
@@ -74,8 +75,12 @@ function showBookmark(data, callback) {
                 item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
                 item.isBookmark = 0;
                 done(null);
+            }, function(err) {
+                if (err) {
+                    return callback(null);
+                }
+                callback(null, results);
             });
-            callback(null, results);
         });
     });
 }
@@ -90,11 +95,11 @@ function deleteBookmark(data, callback) {
         'where user_id = ?';
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.parallel([deleteBookmark, updateBookmarkCount], function(err, results) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 callback(err);
             } else {

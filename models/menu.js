@@ -7,13 +7,15 @@ function createMenu(data, callback) {
     var sql_createMenu =
         'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
         'values (?, ?, ?, ?, ?, ?, ?)';
+
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_createMenu, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation], function(err, result) {
                 dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     return callback(err);
                 }
@@ -34,23 +36,23 @@ function updateMenu(data, callback) {
         'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
         'where id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
        if (err) {
-           dbConn.release();
            return callback(err);
        }
        dbConn.beginTransaction(function(err) {
            if (err) {
-               dbConn.release();
                return callback(err);
            }
            async.waterfall([selectMenuInfo, updateMenuInfo], function(err) {
-               dbConn.release();
                if (err) {
                    return callback(err);
                }
                dbConn.commit(function() {
-                  callback(null);
+                   dbConn.release();
+                   dbPool.logStatus();
+                   callback(null);
                });
            });
        });
@@ -75,7 +77,6 @@ function updateMenu(data, callback) {
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function (err, result) {
@@ -90,7 +91,6 @@ function updateMenu(data, callback) {
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     async.series([deleteFile, newMenuInfo], function(err) {
@@ -106,7 +106,7 @@ function updateMenu(data, callback) {
                 });
             }
             function deleteFile(callback) {
-                dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
+                dbConn.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
                     if (err) {
                         return callback(err);
                     }
@@ -129,24 +129,58 @@ function updateMenu(data, callback) {
         }
     });
 }
-
 /* 메뉴 삭제 */
 function deleteMenu(data, callback) {
+    var sql_selectDeleteFilePath = 'select image from menu where id = ?'; // 지울 사진 경로
     var sql_deleteMenu = 'delete from menu where id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
-        // 사진 삭제 처리
-        dbConn.query(sql_deleteMenu, [data.id], function(err, result) {
-            dbConn.release();
+        dbConn.beginTransaction(function(err) {
             if (err) {
-                return callback(err)
+                return callback(err);
             }
-            callback(null);
+            async.series([deleteFile, deleteMenu], function(err) {
+                if (err) {
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        dbPool.logStatus();
+                        callback(err);
+                    });
+                }
+                dbConn.commit(function() {
+                    dbConn.release();
+                    dbPool.logStatus();
+                    callback(null);
+                });
+            });
         });
+        // 사진 파일 삭제
+        function deleteFile(callback) {
+            dbConn.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
+                if (err) {
+                    return callback(err);
+                }
+                fs.unlink(results[0].image, function(err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                });
+                callback(null);
+            });
+        }
+        // 사진 db 삭제
+        function deleteMenu(callback) {
+            dbConn.query(sql_deleteMenu, [data.id], function(err, result) {
+                if (err) {
+                    return callback(err)
+                }
+                callback(null);
+            });
+        }
     });
 }
 

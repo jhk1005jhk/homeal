@@ -5,12 +5,15 @@ function createSchedule(data, callback) {
     var sql_createSchedule =
         'insert into schedule(cooker_user_id, date, pax, sharing) ' +
         'values (?, ?, ?, ?)';
+
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
         dbConn.query(sql_createSchedule, [data.id, data.date, data.pax, data.sharing], function(err, result) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
@@ -21,13 +24,15 @@ function createSchedule(data, callback) {
 /* 일정 삭제 */
 function deleteSchedule(data, callback) {
     var sql_deleteSchedule = 'delete from schedule where id = ?';
+
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.query(sql_deleteSchedule, [data.id], function(err, result) {
             dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }

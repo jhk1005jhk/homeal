@@ -8,9 +8,10 @@ var fcm = require('node-gcm');
 /* 채팅 메시지 송신 */
 router.post('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    var message = '메시지 전송 성공';
     var data = {};
-    data.target = req.body.target;
+    data.sender = req.user.id;
+    data.receiver = req.body.receiver;
+    data.message = req.body.message;
 
     // 받을 사람 토큰 가져오기
     Chatting.selectRegistarionToken(data, function(err, result) {
@@ -29,10 +30,14 @@ router.post('/', isAuthenticated, function(req, res, next) {
         sender.send(msg, {registrationTokens: result}, function(err, response) {
             if (err)
                 return next(err);
+            Chatting.insertChattingLog(data, function(err, result) {
+                if (err) {
+                    return next(err);
+                }
+            });
             res.send({
                 code: 1,
-                message: message,
-                result: result
+                message: '메시지 전송 완료'
             });
         });
     });
@@ -40,31 +45,18 @@ router.post('/', isAuthenticated, function(req, res, next) {
 /* 채팅 메시지 수신 */
 router.get('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    var message = '채팅 목록 조회 완료';
-    if (req.url.match(/\/\?pageNo=\d+&rowCount=\d+/i)) {
-        var pageNo = parseInt(req.query.pageNo, 10);
-        var rowCount = parseInt(req.query.rowCount, 10);
-
-        var result = {};
-        result.pageNo = pageNo;
-        result.rowCount = rowCount;
-
-        var list = [];
-        list.push({
-            'eater_id': 1,
-            'cooker_id': 1
-        });
-        list.push({
-            'eater_id': 2,
-            'cooker_id': 2
-        });
+    var data = {};
+    data.receiver = req.user.id;
+    Chatting.getChattingLog(data, function(err, results) {
+        if (err) {
+            return next(err);
+        }
         res.send({
             code: 1,
-            message: message,
-            result: result,
-            list: list
+            message: '메시지 수신 완료',
+            result: results
         });
-    }
+    });
 });
 
 module.exports = router;

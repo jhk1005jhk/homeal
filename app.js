@@ -36,7 +36,7 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.SESSION_SECRET));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   store: new RedisStore({
@@ -45,7 +45,13 @@ app.use(session({
     client: redisClient
   }),
   resave: true, // 변경된게 없으면 세션을 저장하지 말아라
-  saveUninitialized: true // 저장된게 없으면 세션을 저장
+  saveUninitialized: true, // 저장된게 없으면 세션을 저장
+  cookie: {
+    path: '/',
+    httpOnly: true,
+    secure: false, // 안전한 상태에서만 쿠키를 보내겠습니다. https 에서만 보내겠다.
+    maxAge: 1000 * 60 * 60 * 24 * 30
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());

@@ -12,16 +12,17 @@ function findByEmail(email, callback) {
     var sql_findCooker = 'select * from user u join cooker c on (u.id = c.user_id) where email = ?';
     var sql_findEater = 'select * from user u join eater e on (u.id = e.user_id) where email = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, findUser], function(err, results) {
-            dbConn.release();
             if (err) {
                 callback(err);
             } else {
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null, results);
             }
         });
@@ -72,40 +73,41 @@ function registerUser(newUser, callback) {
     var sql_registerCooker = 'insert into cooker (user_id) values (?)';
     var sql_registerEater = 'insert into eater (user_id) values (?)';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
            if (err) {
-               dbConn.release();
                return callback(err);
            }
            // type 구분 처리
            if (newUser.type === 'cooker') { // 쿠커 회원가입
                async.series([registerUser, registerCooker], function(err) {
+                   dbConn.release();
+                   //console.log('여기야?------------------------');
+                   dbPool.logStatus();
                    if (err) {
                        return dbConn.rollback(function () {
-                           dbConn.release();
                            callback(err);
                        });
                    }
                    dbConn.commit(function () {
-                       dbConn.release();
                        callback(null, newUser);
                    })
                });
            } else if (newUser.type === 'eater') { // 잇터 회원가입
                async.series([registerUser, registerEater], function(err) {
+                   dbConn.release();
+                   //console.log('여기야?------------------------');
+                   dbPool.logStatus();
                    if (err) {
                        return dbConn.rollback(function() {
-                           dbConn.release();
                            callback(err);
                        });
                    }
                    dbConn.commit(function() {
-                       dbConn.release();
                        callback(null, newUser);
                    })
                });
@@ -151,13 +153,12 @@ function showUser(showUser, callback) {
         'from user u join eater e on (u.id = e.user_id) ' +
         'where u.id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, selectUser], function(err, results) {
-            dbConn.release();
             if (err) {
                 callback(err);
             } else {
@@ -173,6 +174,8 @@ function showUser(showUser, callback) {
                 if (results[0].address !== null) { // 잇터일 경우 주소가 없으므로 주소가 있는지 판단
                     data.address = results[0].address;
                 }
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null, data)
             }
         });
@@ -218,14 +221,13 @@ function FB_findOrCreate(profile, callback) {
     var sql_find_facebookid = 'select * from user where facebook_id = ?';
     var sql_create_facebookid = 'insert into user(email, image, name, facebook_id) values(?, ?, ?, ?)';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         // homealdb에 facebook_id(profile.id)가 있는지 확인
         dbConn.query(sql_find_facebookid, [profile.id], function(err, results) {
-            dbConn.release();
             if (err) {
                 return callback(0);
             }
@@ -240,13 +242,17 @@ function FB_findOrCreate(profile, callback) {
             }
             // profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
             dbConn.query(sql_create_facebookid, [profile.emails[0].value, profile.photos[0].value, profile.displayName, profile.id], function (err, result) {
-                if (err)
+                if (err) {
                     return callback(err);
+                }
                 var user = {};
                 user.id = result.insertId; // 마지막 번호
                 user.name = profile.displayName;
                 user.email = profile.emails[0].value;
                 user.facebook_id = profile.id;
+
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null, user);
             });
         });
@@ -259,16 +265,17 @@ function deleteUser(deleteUserId, callback) {
     var sql_deleteCooker = 'delete from cooker where user_id = ?';
     var sql_deleteEater = 'delete from eater where user_id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
-            dbConn.release();
             return callback(err);
         }
         async.waterfall([selectUserType, deleteUser], function(err, results) {
-            dbConn.release();
             if (err) {
                 callback(err);
             } else {
+                dbConn.release();
+                dbPool.logStatus();
                 callback(results);
             }
         });
@@ -286,37 +293,31 @@ function deleteUser(deleteUserId, callback) {
             if (type === 'cooker') {
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     async.series([deleteCooker, deleteUserCommon], function(err, result) {
                         if (err) {
                             return dbConn.rollback(function() {
-                                dbConn.release();
                                 callback(err);
                             });
                         }
                         dbConn.commit(function() {
-                            dbConn.release();
                             callback(null);
                         });
-                    })
+                    });
                 });
             } else if (type === 'eater') {
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     async.series([deleteEater, deleteUserCommon], function(err, result) {
                         if (err) {
                             return dbConn.rollback(function() {
-                                dbConn.release();
                                 callback(err);
                             });
                         }
                         dbConn.commit(function() {
-                            dbConn.release();
                             callback(null);
                         });
                     });
