@@ -14,7 +14,6 @@ function createBookmark(data, callback) {
         'set bookmarkCnt = bookmarkCnt + 1 ' +
         'where user_id = ?';
 
-
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -51,10 +50,10 @@ function createBookmark(data, callback) {
 /* 찜 조회 */
 function showBookmark(data, callback) {
     var sql_showBookmark =
-        'select u.id cid, p.image thumbnail, u.image, u.name name, c.address, u.introduce, accumulation, reviewCnt, bookmarkCnt, grade ' +
-        'from cooker c join bookmark b on (c.user_id = b.cooker_user_id) ' +
-        'join user u on (c.user_id = u.id) ' +
-        'join photo p on (c.user_id = p.cooker_user_id) ' +
+        'select u.id cid, p.image thumbnail, u.image, u.name name, c.address, u.introduce, reviewCnt, bookmarkCnt, grade, eater_user_id isBookmark ' +
+        'from cooker c left join bookmark b on (c.user_id = b.cooker_user_id) ' +
+                           'join user u on (c.user_id = u.id) ' +
+                           'join photo p on (c.user_id = p.cooker_user_id) ' +
         'where b.eater_user_id = ? ' +
         'group by u.id';
 
@@ -63,9 +62,9 @@ function showBookmark(data, callback) {
             return callback(err);
         }
         dbConn.query(sql_showBookmark, [data.id], function(err, results) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
             async.each(results, function (item, done) {
@@ -73,12 +72,18 @@ function showBookmark(data, callback) {
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
                 item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
-                item.isBookmark = 0;
+                if( item.isBookmark === null) {
+                    item.isBookmark = 0;
+                } else {
+                    item.isBookmark = 1;
+                }
                 done(null);
             }, function(err) {
                 if (err) {
                     return callback(null);
                 }
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null, results);
             });
         });
@@ -93,6 +98,8 @@ function deleteBookmark(data, callback) {
         'update cooker ' +
         'set bookmarkCnt = bookmarkCnt - 1 ' +
         'where user_id = ?';
+
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);

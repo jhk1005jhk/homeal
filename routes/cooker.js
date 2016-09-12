@@ -46,7 +46,12 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
         data.country = fields.country;
         data.phone = fields.phone;
         data.introduce = fields.introduce;
+
         data.address = fields.address;
+        data.map = files.map;
+        data.latitude = fields.latitude;
+        data.longitude = fields.longitude;
+
         Cooker.updateCookerInfo(data, function(err) {
             if (err) {
                 return next(err);

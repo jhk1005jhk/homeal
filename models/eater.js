@@ -49,9 +49,9 @@ function updateEaterInfo(data, callback) {
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
             async.waterfall([selectEaterInfo, updateUserInfo], function (err) {
@@ -59,6 +59,8 @@ function updateEaterInfo(data, callback) {
                     return callback(err);
                 }
                 dbConn.commit(function () {
+                    dbConn.release();
+                    dbPool.logStatus();
                     callback(null);
                 });
             });
@@ -140,11 +142,11 @@ function updateEaterInfo(data, callback) {
             dbConn.query(sql_updateUserInfo,
                 [data.image, data.name, data.gender, data.birth, data.country,
                     data.phone, data.introduce, data.id], function (err, result) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback(null);
-                });
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
         }
     });
 }
@@ -161,11 +163,13 @@ function showEaterReview(data, callback) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
+            dbConn.release();
+            dbPool.logStatus();
             callback(null, results);
         });
     });

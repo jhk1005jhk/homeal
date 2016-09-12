@@ -26,6 +26,7 @@ function createReservation(data, callback) {
             }, function (err) { // done callback
                 if (err) {
                     dbConn.release();
+                    dbPool.logStatus();
                     return callback(err);
                 }
                 dbConn.release();
@@ -34,12 +35,11 @@ function createReservation(data, callback) {
             });
         } else { // 메뉴 1개 예약
             dbConn.query(sql, [data.eater, data.cooker, data.schedule, data.menu, data.pax], function(err, result) {
-                if (err) {
-                    dbConn.release();
-                    return callback(err);
-                }
                 dbConn.release();
                 dbPool.logStatus();
+                if (err) {
+                    return callback(err);
+                }
                 callback(null, result);
             });
         }
@@ -74,11 +74,11 @@ function showReservation(data, callback) {
                 return callback(err);
             }
             async.waterfall([selectUserType, reservationOfUser], function (err, results) {
+                dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     callback(err);
                 } else {
-                    dbConn.release();
-                    dbPool.logStatus();
                     callback(null, results);
                 }
             });

@@ -1,8 +1,10 @@
 var express = require('express');
 var router = express.Router();
 var Review = require('../models/review');
+var Notification = require('../models/notification');
 var isAuthenticated = require('./common').isAuthenticated;
 var logger = require('../common/logger');
+var fcm = require('node-gcm');
 
 /* 후기 작성 */
 router.post('/', isAuthenticated, function(req, res, next) {
@@ -22,10 +24,31 @@ router.post('/', isAuthenticated, function(req, res, next) {
     data.time = req.body.time || null;                    // 시간
     data.manner = req.body.manner || null;                // 예절
 
+    // 후기 작성
     Review.createReview(data, function(err, result) {
         if (err) {
             return next(err);
         }
+        // 후기 알림 전송
+        Notification.selectRegistarionToken(data, function(err, token) {
+            var msg = fcm.Message({
+                data: {
+                    key1: 'value',
+                    key2: 'value'
+                },
+                notification: {
+                    title: 'Homeal',
+                    icon: 'ic_launcher',
+                    body: 'We have new REVIEW INFO of you :)'
+                }
+            });
+
+            var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
+            sender.send(msg, {registrationTokens: token}, function(err, response) {
+                if (err)
+                    return next(err);
+            });
+        });
         res.send({
             code: 1,
             message: message

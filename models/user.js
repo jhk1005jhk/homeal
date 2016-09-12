@@ -18,11 +18,11 @@ function findByEmail(email, callback) {
             return callback(err);
         }
         async.waterfall([selectUserType, findUser], function(err, results) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 callback(err);
             } else {
-                dbConn.release();
-                dbPool.logStatus();
                 callback(null, results);
             }
         });
@@ -80,34 +80,38 @@ function registerUser(newUser, callback) {
         }
         dbConn.beginTransaction(function(err) {
            if (err) {
+               dbConn.release();
+               dbPool.logStatus();
                return callback(err);
            }
            // type 구분 처리
            if (newUser.type === 'cooker') { // 쿠커 회원가입
                async.series([registerUser, registerCooker], function(err) {
-                   dbConn.release();
-                   //console.log('여기야?------------------------');
-                   dbPool.logStatus();
                    if (err) {
                        return dbConn.rollback(function () {
+                           dbConn.release();
+                           dbPool.logStatus();
                            callback(err);
                        });
                    }
                    dbConn.commit(function () {
+                       dbConn.release();
+                       dbPool.logStatus();
                        callback(null, newUser);
                    })
                });
            } else if (newUser.type === 'eater') { // 잇터 회원가입
                async.series([registerUser, registerEater], function(err) {
-                   dbConn.release();
-                   //console.log('여기야?------------------------');
-                   dbPool.logStatus();
                    if (err) {
                        return dbConn.rollback(function() {
+                           dbConn.release();
+                           dbPool.logStatus();
                            callback(err);
                        });
                    }
                    dbConn.commit(function() {
+                       dbConn.release();
+                       dbPool.logStatus();
                        callback(null, newUser);
                    })
                });
@@ -160,6 +164,8 @@ function showUser(showUser, callback) {
         }
         async.waterfall([selectUserType, selectUser], function(err, results) {
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 callback(err);
             } else {
                 var data = {};
@@ -229,18 +235,25 @@ function FB_findOrCreate(profile, callback) {
         // homealdb에 facebook_id(profile.id)가 있는지 확인
         dbConn.query(sql_find_facebookid, [profile.id], function(err, results) {
             if (err) {
-                return callback(0);
+                dbConn.release();
+                dbPool.logStatus();
+                return callback(err);
             }
-            // profile.id 가 있다면 반환
+            // [CODE:0 facebook 연동 실패]
+            // [CODE:1 이미 facebook 연동 됨] profile.id 가 있다면 반환
             if (results.length !== 0) {
                 var user = {};
                 user.id = results[0].id;
                 user.name = results[0].name;
                 user.email = results[0].email;
                 user.facebook_id = results[0].facebook_id;
+                user.code = 1;
+                user.type = results[0].type;
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(null, user);
             }
-            // profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
+            // [CODE:2 facebook 연동 성공] profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
             dbConn.query(sql_create_facebookid, [profile.emails[0].value, profile.photos[0].value, profile.displayName, profile.id], function (err, result) {
                 if (err) {
                     return callback(err);
@@ -250,11 +263,35 @@ function FB_findOrCreate(profile, callback) {
                 user.name = profile.displayName;
                 user.email = profile.emails[0].value;
                 user.facebook_id = profile.id;
-
+                user.code = 2;
                 dbConn.release();
                 dbPool.logStatus();
                 callback(null, user);
             });
+        });
+    });
+}
+/* 레지스트레이션 토큰 생성 */
+function updateRegistrationToken(data, callback) {
+    var sql_updateRegistrationToken =
+        'update user ' +
+        'set registration_token = ? ' +
+        'where id = ?';
+
+    dbPool.logStatus();
+    dbPool.getConnection(function(err, dbConn) {
+        if (err) {
+            return callback(err);
+        }
+        dbConn.query(sql_updateRegistrationToken, [data.registration_token, data.id], function(err, result) {
+            if (err) {
+                dbConn.release();
+                dbPool.logStatus();
+                return callback(err);
+            }
+            dbConn.release();
+            dbPool.logStatus();
+            callback(null, result);
         });
     });
 }
@@ -364,3 +401,4 @@ module.exports.registerUser = registerUser;
 module.exports.showUser = showUser;
 module.exports.deleteUser = deleteUser;
 module.exports.FB_findOrCreate = FB_findOrCreate;
+module.exports.updateRegistrationToken = updateRegistrationToken;

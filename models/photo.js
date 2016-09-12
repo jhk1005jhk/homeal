@@ -15,6 +15,8 @@ function createPhoto(data, callback) {
         async.each(data.photos, function(item, done) {
             dbConn.query(sql_createPhoto, [data.id, item.path], function (err) { // item의 path 를 넣어야 한다
                 if (err) {
+                    dbConn.release();
+                    dbPool.logStatus();
                     return done(err);
                 }
                 done(null);
@@ -34,12 +36,11 @@ function deletePhoto(data, callback) {
     var sql_selectDeleteFilePath = 'select image from photo where id = ?';
     var sql_deletePhoto = 'delete from photo where id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function (err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.release();
-        dbPool.logStatus();
         dbConn.beginTransaction(function(err) {
            if (err) {
                return callback(err);
@@ -47,10 +48,14 @@ function deletePhoto(data, callback) {
            async.series([deleteFile, deletePhoto], function(err) {
                if (err) {
                    return dbConn.rollback(function() {
+                       dbConn.release();
+                       dbPool.logStatus();
                        callback(err);
                    });
                }
                dbConn.commit(function() {
+                   dbConn.release();
+                   dbPool.logStatus();
                    callback(null, data);
                });
            });

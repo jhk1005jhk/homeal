@@ -32,8 +32,7 @@ router.post('/', isAuthenticated, function(req, res, next) {
             }
             res.send({
                 code: 1,
-                message: message,
-                result: result
+                message: message
             });
         });
     });

@@ -13,21 +13,22 @@ router.post('/', isAuthenticated, function(req, res, next) {
     data.receiver = req.body.receiver;
     data.message = req.body.message;
 
+
     // 받을 사람 토큰 가져오기
     Chatting.selectRegistarionToken(data, function(err, result) {
         var msg = fcm.Message({
             data: {
-                key1: 'value'
-            },
-            notification: {
                 title: 'Homeal',
                 icon: 'ic_launcher',
-                body: 'We have new MESSAGE for you :)'
+                body: 'We have new MESSAGE for you :)',
+                type: 1
             }
         });
-
+        console.log('옴???');
         var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
+        console.log(sender);
         sender.send(msg, {registrationTokens: result}, function(err, response) {
+            console.log('옴?');
             if (err)
                 return next(err);
             Chatting.insertChattingLog(data, function(err, result) {

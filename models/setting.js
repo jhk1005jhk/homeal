@@ -16,7 +16,7 @@ function changeCurrencyOption(data, callback) {
             dbConn.release();
             dbPool.logStatus();
             if (err) {
-                return callback(0);
+                return callback(err);
             }
             callback(null, result);
         })

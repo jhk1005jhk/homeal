@@ -13,9 +13,9 @@ function selectRegistrationToken(data, callback) {
         if (err) {
             return callback(err);
         }
-        dbConn.release();
-        dbPool.logStatus();
         dbConn.query(sql_selectRegistrationToken, [data.receiver], function(err, results) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
@@ -29,17 +29,20 @@ function insertChattingLog(data, callback) {
         'insert into chatting (sender, receiver, message) ' +
         'values (?, ?, ?)';
 
+    console.log('남길: ' + data.sender); // 66
+    console.log('준홍: ' + data.receiver); // 35
+    console.log('메시지: ' + data.message);
     dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
         dbConn.query(sql_insertChattingLog, [data.sender, data.receiver, data.message], function(err, results) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
-            dbConn.release();
-            dbPool.logStatus();
             callback(null, results[0]);
         })
     });
@@ -67,6 +70,8 @@ function getChattingLog(data, callback) {
             var log = [];
             dbConn.query(sql_selectChattingLog, [data.receiver], function(err, results) {
                 if (err) {
+                    dbConn.release();
+                    dbPool.logStatus();
                     return callback(err);
                 }
                 async.each(results, function(item, done) {
@@ -84,9 +89,9 @@ function getChattingLog(data, callback) {
                     if (err) {
                         return callback(err);
                     }
-                    dbConn.release();
-                    dbPool.logStatus();
                     dbConn.commit(function() {
+                        dbConn.release();
+                        dbPool.logStatus();
                         callback(null, log);
                     });
                 });

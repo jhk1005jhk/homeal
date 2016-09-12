@@ -104,9 +104,20 @@ router.get('/facebook/callback', passport.authenticate('facebook'), function(req
 /* 페이스북 로그인 (access_token 매개변수로 넘겨줘야 함) */
 router.post('/facebook/token', isSecure, passport.authenticate('facebook-token', {scope : ['email']}), function(req, res, next) { // 결과만 가지고
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    var data = {};
+    if(req.user) {
+        data.id = req.user.id;
+        data.registration_token = req.body.registration_token;
+        User.updateRegistrationToken(data, function(err) {
+            if (err) {
+                return next(err);
+            }
+        });
+    }
     res.send({
-        code: 1,
-        message: req.user? '페이스북 로그인 성공' : '페이스북 로그인 실패'
+        code: req.user.code? req.user.code : 0,
+        message: req.user? '페이스북 로그인 성공' : '페이스북 로그인 실패',
+        result: req.user.type
     });
 });
 /* 페이스북 로그아웃 */

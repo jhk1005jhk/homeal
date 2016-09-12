@@ -32,10 +32,12 @@ function showCookerInfo(data, callback) {
 }
 /* 쿠커 정보 수정 */
 function updateCookerInfo(data, callback) {
-    var sql_selectDeleteFilePath =
-        'select image from user where id = ?'; // 지울 사진 경로
+    var sql_selectDeleteImageFilePath =
+        'select image from user where id = ?'; // 지울 프로필 사진 경로
+    var sql_selectDeleteMapFilePath =
+        'select map from cooker where id = ?'; // 지울 지도 사진 경로
     var sql_selectCookerInfo =
-        'select image, name, gender, birth, country, phone, introduce, address ' +
+        'select image, name, gender, birth, country, phone, introduce, address, map, longitude, latitude ' +
         'from user u join cooker c on (u.id = c.user_id) ' +
         'where u.id = ?';
     var sql_updateUserInfo =
@@ -44,7 +46,7 @@ function updateCookerInfo(data, callback) {
         'where id = ?';
     var sql_updateCookerInfo =
         'update cooker ' +
-        'set address = ? ' +
+        'set address = ?, map = ?, latitude = ?, longitude = ? ' +
         'where user_id = ?';
 
     dbPool.logStatus();
@@ -53,16 +55,18 @@ function updateCookerInfo(data, callback) {
             return callback(err);
         }
         dbConn.beginTransaction(function(err) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
-                return callback(err);
+                callback(err);
             }
             async.waterfall([selectCookerInfo, updateUserInfo], function(err) {
                 if (err) {
-                    return callback(err);
+                    return dbConn.rollback(function () {
+                        callback(err);
+                    });
                 }
                 dbConn.commit(function() {
+                    dbConn.release();
+                    dbPool.logStatus();
                     callback(null);
                 });
             });
@@ -85,13 +89,17 @@ function updateCookerInfo(data, callback) {
             data.phone = data.phone || originalData.name;
             data.introduce = data.introduce || originalData.introduce;
             data.address = data.address || originalData.address;
+            data.latitude = data.latitude || originalData.latitude;
+            data.longitude = data.longitude || originalData.longitude;
 
-            if (data.image === undefined) {
+            // 프로필 사진, 지도 사진 둘다 변경이 없을 때
+            if (data.image === undefined && data.map === undefined) {
+                console.log(data.image === undefined && data.map === undefined);
                 data.image = originalData.image;
+                data.map = originalData.map;
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
                     async.series([newUserInfo, newCookerInfo], function(err) {
@@ -105,15 +113,40 @@ function updateCookerInfo(data, callback) {
                         });
                     });
                 });
-            } else {
+                // 프로필 사진만 변경됬을 때
+            } else if (data.image !== undefined && data.map === undefined){
+                console.log(data.image !== undefined && data.map === undefined);
+                console.log('들어옴');
                 data.image = data.image.path;
+                data.map = originalData.map;
+                console.log(data.image);
+                console.log(data.map);
+                dbConn.beginTransaction(function(err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    async.series([selectDeleteImageFilePath, newUserInfo, newCookerInfo], function(err) {
+                        if (err) {
+                            return dbConn.rollback(function () {
+                                callback(err);
+                            });
+                        }
+                        dbConn.commit(function() {
+                            callback(null);
+                        });
+                    });
+                });
+                // 지도 사진만 변경됬을 때
+            } else if (data.image === undefined && data.map !== undefined) {
+                console.log(data.image === undefined && data.map !== undefined);
+                data.image = originalData.image;
+                data.map = data.map.path;
 
                 dbConn.beginTransaction(function(err) {
                     if (err) {
-                        dbConn.release();
                         return callback(err);
                     }
-                    async.series([deleteFile, newUserInfo, newCookerInfo], function(err) {
+                    async.series([selectDeleteMapFilePath, newUserInfo, newCookerInfo], function(err) {
                         if (err) {
                             return dbConn.rollback(function () {
                                 callback(err);
@@ -127,8 +160,8 @@ function updateCookerInfo(data, callback) {
             }
         }
         /* 사진 삭제 */
-        function deleteFile(callback) {
-            dbPool.query(sql_selectDeleteFilePath, [data.id], function(err, results) {
+        function selectDeleteImageFilePath(callback) {
+            dbPool.query(sql_selectDeleteImageFilePath, [data.id], function (err, results) {
                 if (err) {
                     return callback(err);
                 }
@@ -144,7 +177,23 @@ function updateCookerInfo(data, callback) {
                 callback(null);
             });
         }
-        /* 공통 정보 업데이트 (사진 경로 업데이트 포함) */
+        /* 지도 사진 파일 삭제 */
+        function selectDeleteMapFilePath(callback) {
+            dbPool.query(sql_selectDeleteMapFilePath, [data.id], function(err, results) {
+                if (err) {
+                    return callback(err);
+                }
+                // 경로가 있는 사진만 지울 수 있음, 사진명만 있는건 경로를 찾을 수 없어서 못 지움
+                fs.unlink(results[0].map, function (err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                });
+                callback(null);
+            });
+        }
+
+        /* 공통 정보 업데이트 */
         function newUserInfo(callback) {
             dbConn.query(sql_updateUserInfo,
                 [data.image, data.name, data.gender, data.birth, data.country,
@@ -155,9 +204,9 @@ function updateCookerInfo(data, callback) {
                     callback(null);
             });
         }
-        /* 쿠커 정보 업데이트 */
+        /* 쿠커 주소 정보 업데이트 */
         function newCookerInfo(callback) {
-            dbConn.query(sql_updateCookerInfo, [data.address, data.id], function (err, result) {
+            dbConn.query(sql_updateCookerInfo, [data.address, data.map, data.latitude, data.longitude, data.id], function (err, result) {
                 if (err) {
                     return callback(err);
                 }
@@ -184,11 +233,11 @@ function showCookerStore(data, callback) {
         });
         /* 쿠커 포토 조회*/
         function showCookerPhoto(callback) {
-            var sql =
+            var sql_showCookerPhoto =
                 'select p.id pid, image ' +
                 'from cooker c join photo p on (c.user_id = p.cooker_user_id) ' +
                 'where c.user_id = ?';
-            dbConn.query(sql, [data.id], function(err, results) {
+            dbConn.query(sql_showCookerPhoto, [data.id], function(err, results) {
                 if (err) {
                     return callback(err);
                 }
@@ -196,14 +245,18 @@ function showCookerStore(data, callback) {
                     var filename = path.basename(item.image); // 사진이름
                     item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + filename);
                     done(null);
+                }, function(err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null, results);
                 });
-                callback(null, results);
             });
         }
         /* 쿠커 정보 조회 */
         function showCookerInfo(callback) {
             var sql_showCookerInfo =
-                'select u.id uid, image, name, gender, birth, country, phone, introduce, address, longitude, latitude, accumulation, ' +
+                'select u.id uid, image, name, gender, birth, country, phone, introduce, address, longitude, latitude, ' +
                         'round((avg(taste) + avg(price) + avg(cleanliness) + avg(kindness))/4, 1) grade, ' +
                         'round(avg(taste), 1) taste, round(avg(price), 1) price, ' +
                         'round(avg(cleanliness), 1) cleanliness, round(avg(kindness), 1) kindness, bookmarkCnt, reviewCnt ' +
@@ -265,17 +318,24 @@ function showCookerPhoto(data, callback) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + filename);
                 done(null);
+            }, function(err) {
+                if (err) {
+                    return callback(err);
+                }
+                dbConn.release();
+                dbPool.logStatus();
+                callback(null, results);
             });
-            callback(null, results);
+
         });
     });
 }
@@ -291,17 +351,23 @@ function showCookerMenu(data, callback) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
-            dbConn.release();
-            dbPool.logStatus();
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
             async.each(results, function(item, done) {
                 var filename = path.basename(item.image); // 사진이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/menus/' + filename);
                 done(null);
+            }, function(err) {
+                if (err) {
+                    return callback(err);
+                }
+                dbConn.release();
+                dbPool.logStatus();
+                callback(null, results);
             });
-            callback(null, results);
         });
     });
 }
@@ -312,12 +378,12 @@ function showCookerSchedule(data, callback) {
               'where cooker_user_id = ?';
     dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
-        dbConn.release();
-        dbPool.logStatus();
         if (err) {
             return callback(err);
         }
         dbConn.query(sql, [data.id], function(err, results) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
@@ -329,7 +395,7 @@ function showCookerSchedule(data, callback) {
 function showCookerStoreList(data, callback) {
     // 내가 찜한 건지 아닌지 목록에 표시 (isBookmark)
     var sql_selectCookerInfo =
-        'select u.id cid, p.image thumbnail, u.image image, u.name name, c.address address, u.introduce introduce, accumulation, reviewCnt, bookmarkCnt, grade, eater_user_id isBookmark ' +
+        'select u.id cid, p.image thumbnail, u.image image, u.name name, c.address address, u.introduce introduce, reviewCnt, bookmarkCnt, grade, eater_user_id isBookmark ' +
         'from cooker c join user u on (u.id = c.user_id) ' +
                       'join photo p on (c.user_id = p.cooker_user_id) ' +
                       'left join bookmark b on (c.user_id = b.cooker_user_id) ' +
@@ -367,18 +433,18 @@ function showCookerStoreList(data, callback) {
                 }
                 dbConn.release();
                 dbPool.logStatus();
-                console.log('여기 누수?');
                 callback(null, results);
             });
-
         });
     });
 }
 /* 쿠커 섬네일 페이지 검색 */
 function searchCookerStore(data, callback) {
-    var sql = 'select * ' +
-        'from user u join cooker c on (u.id = c.user_id) ' +
-        'join photo p on (u.id = p.cooker_user_id) ' +
+    var sql_searchCookerStore =
+        'select u.id cid, p.image thumbnail, u.image image, u.name name, c.address address, u.introduce introduce, reviewCnt, bookmarkCnt, grade, eater_user_id isBookmark ' +
+        'from cooker c join user u on (u.id = c.user_id) ' +
+                      'join photo p on (c.user_id = p.cooker_user_id) ' +
+                      'left join bookmark b on (c.user_id = b.cooker_user_id) ' +
         'where name like ? or address like ? ' +
         'group by u.id ' +
         'limit ?, ?';
@@ -392,20 +458,29 @@ function searchCookerStore(data, callback) {
         data.pageNo = parseInt(data.rowCount * (data.pageNo - 1)); // 숫자로 변환
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
-        dbConn.query(sql, [data.keyword, data.keyword, data.pageNo, data.rowCount], function (err, results) {
-            dbConn.release();
-            dbPool.logStatus();
+        dbConn.query(sql_searchCookerStore, [data.keyword, data.keyword, data.pageNo, data.rowCount], function (err, results) {
             if (err) {
+                dbConn.release();
+                dbPool.logStatus();
                 return callback(err);
             }
             async.each(results, function (item, done) {
-                var filename = path.basename(item.image); // 사진이름
-                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                var userFileName = path.basename(item.image);         // 유저 사진 이름
+                var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
+                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
+                if( item.isBookmark === null) {
+                    item.isBookmark = 0;
+                } else {
+                    item.isBookmark = 1;
+                }
                 done(null);
             }, function(err) {
                 if (err) {
                     return callback(err);
                 }
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null, results);
             });
         });

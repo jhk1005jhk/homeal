@@ -19,6 +19,8 @@ function createMenu(data, callback) {
                 if (err) {
                     return callback(err);
                 }
+                dbConn.release();
+                dbPool.logStatus();
                 callback(null);
             });
     });
@@ -47,6 +49,8 @@ function updateMenu(data, callback) {
            }
            async.waterfall([selectMenuInfo, updateMenuInfo], function(err) {
                if (err) {
+                   dbConn.release();
+                   dbPool.logStatus();
                    return callback(err);
                }
                dbConn.commit(function() {
