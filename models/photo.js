@@ -22,11 +22,11 @@ function createPhoto(data, callback) {
                 done(null);
             });
         }, function(err) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
                 return callback(err);
             }
-            dbConn.release();
-            dbPool.logStatus();
             callback(null);
         });
     });
@@ -46,16 +46,14 @@ function deletePhoto(data, callback) {
                return callback(err);
            }
            async.series([deleteFile, deletePhoto], function(err) {
+               dbConn.release();
+               dbPool.logStatus();
                if (err) {
                    return dbConn.rollback(function() {
-                       dbConn.release();
-                       dbPool.logStatus();
                        callback(err);
                    });
                }
                dbConn.commit(function() {
-                   dbConn.release();
-                   dbPool.logStatus();
                    callback(null, data);
                });
            });

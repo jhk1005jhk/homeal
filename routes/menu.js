@@ -24,7 +24,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
         data.image = files.image.path;
         data.price = parseInt(fields.price, 10);
         data.introduce = fields.introduce;
-        data.currency = parseInt(fields.currency, 10);
         data.activation = parseInt(fields.activation, 10);
         Menu.createMenu(data, function(err, result) {
             if (err) {
@@ -56,7 +55,6 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
         data.image = files.image;
         data.price = parseInt(fields.price, 10);
         data.introduce = fields.introduce;
-        data.currency = parseInt(fields.currency, 10);
         data.activation = parseInt(fields.activation, 10);
         Menu.updateMenu(data, function(err) {
             if (err) {

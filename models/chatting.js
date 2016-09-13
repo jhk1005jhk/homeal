@@ -1,7 +1,7 @@
 var dbPool = require('../models/common').dbPool;
 var async = require('async');
 
-/* 레지스트레이션 토큰 가져오기 */
+/* 레지스트레이션 토큰 추출 */
 function selectRegistrationToken(data, callback) {
     var sql_selectRegistrationToken =
         'select registration_token ' +
@@ -19,7 +19,7 @@ function selectRegistrationToken(data, callback) {
             if (err) {
                 return callback(err);
             }
-            callback(null, results[0]);
+            callback(null, results);
         })
     });
 }
@@ -29,9 +29,6 @@ function insertChattingLog(data, callback) {
         'insert into chatting (sender, receiver, message) ' +
         'values (?, ?, ?)';
 
-    console.log('남길: ' + data.sender); // 66
-    console.log('준홍: ' + data.receiver); // 35
-    console.log('메시지: ' + data.message);
     dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
@@ -86,12 +83,12 @@ function getChattingLog(data, callback) {
                         done(null);
                     });
                 }, function(err) {
+                    dbConn.release();
+                    dbPool.logStatus();
                     if (err) {
                         return callback(err);
                     }
                     dbConn.commit(function() {
-                        dbConn.release();
-                        dbPool.logStatus();
                         callback(null, log);
                     });
                 });

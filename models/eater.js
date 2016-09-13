@@ -7,7 +7,7 @@ var fs = require('fs');
 /* 잇터 정보 조회 */
 function showEaterInfo(data, callback) {
     var sql_showEaterInfo =
-        'select image, gender, birth, phone, country, introduce, name, type, point, grade ' +
+        'select image, gender, date_format(date, \'%Y/%m/%d %H:%i\'), phone, country, introduce, name, type, point, grade ' +
         'from user u join eater e on (u.id = e.user_id) ' +
         'where user_id = ?';
 
@@ -30,7 +30,7 @@ function showEaterInfo(data, callback) {
         });
     });
 }
-/* 잇터 정보 수정 */
+/* 잇터 정보 수정 (connection 2개 생김) */
 function updateEaterInfo(data, callback) {
     var sql_selectDeleteFilePath =
         'select image from user where id = ?'; // 지울 사진 경로
@@ -56,7 +56,11 @@ function updateEaterInfo(data, callback) {
             }
             async.waterfall([selectEaterInfo, updateUserInfo], function (err) {
                 if (err) {
-                    return callback(err);
+                    return dbConn.rollback(function () {
+                        dbConn.release();
+                        dbPool.logStatus();
+                        callback(err);
+                    });
                 }
                 dbConn.commit(function () {
                     dbConn.release();
@@ -86,18 +90,11 @@ function updateEaterInfo(data, callback) {
             if (data.image === undefined) {
                 data.image = originalData.image;
 
-                dbConn.beginTransaction(function(err) {
+                dbConn.query(sql_updateUserInfo, [data.image, data.name, data.gender, data.birth, data.country, data.phone, data.introduce, data.id], function (err, result) {
                     if (err) {
                         return callback(err);
                     }
-                    dbConn.query(sql_updateUserInfo,
-                        [data.image, data.name, data.gender, data.birth, data.country,
-                            data.phone, data.introduce, data.id], function (err, result) {
-                            if (err) {
-                                return callback(err);
-                            }
-                            callback(null);
-                        });
+                    callback(null);
                 });
             } else {
                 data.image = data.image.path;
@@ -152,8 +149,8 @@ function updateEaterInfo(data, callback) {
 }
 /* 잇터 후기 목록 조회 */
 function showEaterReview(data, callback) {
-    var sql =
-        'select er.cooker_user_id cid, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') as date ' +
+    var sql_showEaterReview =
+        'select er.cooker_user_id cid, u.image, u.name, time, manner, review, date_format(date, \'%Y/%m/%d %H:%i\') date ' +
         'from eater_review er join user u on (er.cooker_user_id = u.id) ' +
         'where eater_user_id = ?';
 
@@ -162,14 +159,16 @@ function showEaterReview(data, callback) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql, [data.id], function(err, results) {
-            if (err) {
-                dbConn.release();
-                dbPool.logStatus();
-                return callback(err);
-            }
+        dbConn.query(sql_showEaterReview, [data.id], function(err, results) {
             dbConn.release();
             dbPool.logStatus();
+            if (err) {
+                return callback(err);
+            }
+            var filename = path.basename(results[0].image); // 사진이름
+            if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+            }
             callback(null, results);
         });
     });

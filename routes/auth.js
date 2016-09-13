@@ -82,7 +82,7 @@ passport.use(new FacebookStrategy({
         });
     }
 ));
-// 페이스북 로그인 (로그인 성공 여부)
+// 페이스북 로그인 전략
 passport.use(new FacebookTokenStrategy({ // 클라이언트에서 받아옴
         clientID: process.env.FACEBOOK_APP_ID,
         clientSecret: process.env.FACEBOOK_APP_SECRET,
@@ -108,6 +108,8 @@ router.post('/facebook/token', isSecure, passport.authenticate('facebook-token',
     if(req.user) {
         data.id = req.user.id;
         data.registration_token = req.body.registration_token;
+        console.log('레지스트레이션 토큰 : ' +data.registration_token);
+        // 업데이트 레지스트레이션 토큰
         User.updateRegistrationToken(data, function(err) {
             if (err) {
                 return next(err);

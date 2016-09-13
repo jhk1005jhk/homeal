@@ -61,6 +61,8 @@ function findByEmail(email, callback) {
     });
 }
 
+
+
 //----------------------------------------------------------------------------------------------------------------------
 // 페이스북 관련
 //----------------------------------------------------------------------------------------------------------------------
@@ -118,14 +120,12 @@ function registerUser(newUser, callback) {
            }
         });
         function registerUser(callback) {
-            dbConn.query(sql_registerUser,
-                [newUser.gender, newUser.birth, newUser.country,
-                    newUser.phone, newUser.introduce, newUser.type, newUser.facebook_id], function(err, result) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    callback(null);
-                });
+            dbConn.query(sql_registerUser, [newUser.gender, newUser.birth, newUser.country, newUser.phone, newUser.introduce, newUser.type, newUser.facebook_id], function(err, result) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null);
+            });
         }
         function registerCooker(callback) {
             dbConn.query(sql_registerCooker, [newUser.id], function(err, result) {
@@ -234,9 +234,9 @@ function FB_findOrCreate(profile, callback) {
         }
         // homealdb에 facebook_id(profile.id)가 있는지 확인
         dbConn.query(sql_find_facebookid, [profile.id], function(err, results) {
+            dbConn.release();
+            dbPool.logStatus();
             if (err) {
-                dbConn.release();
-                dbPool.logStatus();
                 return callback(err);
             }
             // [CODE:0 facebook 연동 실패]
@@ -249,8 +249,6 @@ function FB_findOrCreate(profile, callback) {
                 user.facebook_id = results[0].facebook_id;
                 user.code = 1;
                 user.type = results[0].type;
-                dbConn.release();
-                dbPool.logStatus();
                 return callback(null, user);
             }
             // [CODE:2 facebook 연동 성공] profile.id 가 없다면 생성 (req.user 에 필요한 정보가 붙는다)
@@ -264,8 +262,6 @@ function FB_findOrCreate(profile, callback) {
                 user.email = profile.emails[0].value;
                 user.facebook_id = profile.id;
                 user.code = 2;
-                dbConn.release();
-                dbPool.logStatus();
                 callback(null, user);
             });
         });
@@ -284,13 +280,11 @@ function updateRegistrationToken(data, callback) {
             return callback(err);
         }
         dbConn.query(sql_updateRegistrationToken, [data.registration_token, data.id], function(err, result) {
-            if (err) {
-                dbConn.release();
-                dbPool.logStatus();
-                return callback(err);
-            }
             dbConn.release();
             dbPool.logStatus();
+            if (err) {
+                return callback(err);
+            }
             callback(null, result);
         });
     });

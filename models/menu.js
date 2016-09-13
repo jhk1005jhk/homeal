@@ -5,24 +5,22 @@ var fs = require('fs');
 /* 메뉴 생성 */
 function createMenu(data, callback) {
     var sql_createMenu =
-        'insert into menu(cooker_user_id, name, image, price, introduce, currency, activation) ' +
-        'values (?, ?, ?, ?, ?, ?, ?)';
+        'insert into menu(cooker_user_id, name, image, price, introduce, activation) ' +
+        'values (?, ?, ?, ?, ?, ?)';
 
     dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
         }
-        dbConn.query(sql_createMenu, [data.id, data.name, data.image, data.price, data.introduce, data.currency, data.activation], function(err, result) {
-                dbConn.release();
-                dbPool.logStatus();
-                if (err) {
-                    return callback(err);
-                }
-                dbConn.release();
-                dbPool.logStatus();
-                callback(null);
-            });
+        dbConn.query(sql_createMenu, [data.id, data.name, data.image, data.price, data.introduce, data.activation], function(err, result) {
+            dbConn.release();
+            dbPool.logStatus();
+            if (err) {
+                return callback(err);
+            }
+            callback(null);
+        });
     });
 }
 /* 메뉴 수정 */
@@ -30,12 +28,12 @@ function updateMenu(data, callback) {
     var sql_selectDeleteFilePath =
         'select image from menu where id = ?'; // 지울 사진 경로
     var sql_selectMenuInfo =
-        'select name, image, price, introduce, currency, activation ' +
+        'select name, image, price, introduce, activation ' +
         'from menu ' +
         'where id = ?';
     var sql_updateMenuInfo =
         'update menu ' +
-        'set name = ?, image = ?, price = ?, introduce = ?, currency = ?, activation = ? ' +
+        'set name = ?, image = ?, price = ?, introduce = ?, activation = ? ' +
         'where id = ?';
 
     dbPool.logStatus();
@@ -49,11 +47,13 @@ function updateMenu(data, callback) {
            }
            async.waterfall([selectMenuInfo, updateMenuInfo], function(err) {
                if (err) {
-                   dbConn.release();
-                   dbPool.logStatus();
-                   return callback(err);
+                   return dbConn.rollback(function () {
+                       dbConn.release();
+                       dbPool.logStatus();
+                       callback(err);
+                   });
                }
-               dbConn.commit(function() {
+               dbConn.commit(function () {
                    dbConn.release();
                    dbPool.logStatus();
                    callback(null);
@@ -73,7 +73,6 @@ function updateMenu(data, callback) {
             data.name = data.name || originalData.name;
             data.price = data.price || originalData.price;
             data.introduce = data.introduce || originalData.introduce;
-            data.currency = data.currency || originalData.currency;
             data.activation = data.activation || originalData.activation;
 
             if (data.image === undefined) {
@@ -83,7 +82,7 @@ function updateMenu(data, callback) {
                     if (err) {
                         return callback(err);
                     }
-                    dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function (err, result) {
+                    dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.activation, data.id], function (err, result) {
                         if (err) {
                             return callback(err);
                         }
@@ -123,7 +122,7 @@ function updateMenu(data, callback) {
                 });
             }
             function newMenuInfo(callback) {
-                dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.currency, data.activation, data.id], function (err, result) {
+                dbConn.query(sql_updateMenuInfo, [data.name, data.image, data.price, data.introduce, data.activation, data.id], function (err, result) {
                     if (err) {
                         return callback(err);
                     }

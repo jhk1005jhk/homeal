@@ -14,34 +14,39 @@ router.post('/', isAuthenticated, function(req, res, next) {
     data.eater = req.user.id;
     data.cooker = req.body.cooker;
     data.schedule = req.body.schedule;
-    data.menu = req.body.menu;
     data.pax = req.body.pax;
+    data.menus = [];
+    if (req.body.menus instanceof Array) {
+        data.menus = req.body.menus;
+    } else {
+        data.menus.push(req.body.menus);
+    }
 
     // 예약 생성
     Reservation.createReservation(data, function(err, result) {
         if (err) {
             return next(err);
         }
-        // 예약 알림 전송
-        Notification.selectRegistarionToken(data, function(err, token) {
-            var msg = fcm.Message({
-                data: {
-                    key1: 'value',
-                    key2: 'value'
-                },
-                notification: {
-                    title: 'Homeal',
-                    icon: 'ic_launcher',
-                    body: 'We have new RESERVATION INFO of you :)'
-                }
-            });
-
-            var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
-            sender.send(msg, {registrationTokens: token}, function(err, response) {
-                if (err)
-                    return next(err);
-            });
-        });
+        // // 예약 알림 전송
+        // Notification.selectRegistarionToken(data, function(err, token) {
+        //     var msg = fcm.Message({
+        //         data: {
+        //             key1: 'value',
+        //             key2: 'value'
+        //         },
+        //         notification: {
+        //             title: 'Homeal',
+        //             icon: 'ic_launcher',
+        //             body: 'We have new RESERVATION INFO of you :)'
+        //         }
+        //     });
+        //
+        //     var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
+        //     sender.send(msg, {registrationTokens: token}, function(err, response) {
+        //         if (err)
+        //             return next(err);
+        //     });
+        // });
         res.send({
             code: 1,
             message: message
@@ -72,7 +77,7 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
     var message;
     var code;
     var data = {};
-    data.schedule = req.params.id;
+    data.reservation = req.params.id;
     data.status = req.body.status;
 
     Reservation.updateReservation(data, function (err, result) {

@@ -4,7 +4,7 @@ var path = require('path');
 var url = require('url');
 var fs = require('fs');
 
-/* 찜 생성 */
+/* 찜 추가 */
 function createBookmark(data, callback) {
     var sql_createBookmark =
         'insert into bookmark (eater_user_id, cooker_user_id) ' +
@@ -14,6 +14,7 @@ function createBookmark(data, callback) {
         'set bookmarkCnt = bookmarkCnt + 1 ' +
         'where user_id = ?';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -57,6 +58,7 @@ function showBookmark(data, callback) {
         'where b.eater_user_id = ? ' +
         'group by u.id';
 
+    dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
         if (err) {
             return callback(err);
@@ -68,7 +70,7 @@ function showBookmark(data, callback) {
                 return callback(err);
             }
             async.each(results, function (item, done) {
-                var userFileName = path.basename(item.image);         // 유저 사진 이름
+                var userFileName = path.basename(item.image);          // 유저 사진 이름
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
                 item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
@@ -79,11 +81,11 @@ function showBookmark(data, callback) {
                 }
                 done(null);
             }, function(err) {
+                dbConn.release();
+                dbPool.logStatus();
                 if (err) {
                     return callback(null);
                 }
-                dbConn.release();
-                dbPool.logStatus();
                 callback(null, results);
             });
         });
