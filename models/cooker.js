@@ -256,15 +256,18 @@ function showCookerStore(data, callback) {
                         'round(avg(taste), 1) taste, round(avg(price), 1) price, ' +
                         'round(avg(cleanliness), 1) cleanliness, round(avg(kindness), 1) kindness, bookmarkCnt, reviewCnt ' +
                 'from user u join cooker c on (u.id = c.user_id) ' +
-                            'join cooker_review cr on (u.id = cr.cooker_user_id) ' +
+                            'join review r on (u.id = r.cooker_user_id) ' +
                 'where cooker_user_id = ?';
 
                 dbConn.query(sql_showCookerInfo, [data.id], function(err, results) {
                     if (err) {
                         return callback(err);
                     }
+
                     var imageFileName = path.basename(results[0].image); // 사진이름
-                    results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + imageFileName);
+                    if (imageFileName.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                        results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + imageFileName);
+                    }
                     var mapFileName = path.basename(results[0].map); // 사진이름
                     results[0].map = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + mapFileName);
                     callback(null, results[0]);
@@ -397,11 +400,11 @@ function showCookerSchedule(data, callback) {
 function showCookerStoreList(data, callback) {
     // 내가 찜한 건지 아닌지 목록에 표시 (isBookmark)
     var sql_selectCookerInfo =
-        'select u.id cid, p.image thumbnail, u.image image, u.name name, c.address address, u.introduce introduce, reviewCnt, bookmarkCnt, grade, eater_user_id isBookmark ' +
-        'from cooker c join user u on (u.id = c.user_id) ' +
-                      'join photo p on (c.user_id = p.cooker_user_id) ' +
-                      'left join bookmark b on (c.user_id = b.cooker_user_id) ' +
-        'group by u.id ' +
+        'select * ' +
+        'from (select u.id cid, p.image thumbnail, u.image, u.name name, c.address, u.introduce, reviewCnt, bookmarkCnt, grade ' +
+        'from cooker c join user u on (c.user_id = u.id) ' +
+        'join photo p on (c.user_id = p.cooker_user_id) ' +
+        'group by u.id ) a left outer join (select cooker_user_id isBookmark from bookmark where eater_user_id = ?) b on (a.cid = b.isBookmark) ' +
         'limit ?, ?';
 
     dbPool.logStatus();
@@ -412,16 +415,19 @@ function showCookerStoreList(data, callback) {
         data.pageNo = parseInt(data.rowCount * (data.pageNo - 1)); // 숫자로 변환
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
-        dbConn.query(sql_selectCookerInfo, [data.pageNo, data.rowCount], function (err, results) {
+        dbConn.query(sql_selectCookerInfo, [data.id, data.pageNo, data.rowCount], function (err, results) {
             if (err) {
                 dbConn.release();
                 dbPool.logStatus();
                 return callback(err);
             }
             async.each(results, function (item, done) {
+                console.log(item.isBookmark);
                 var userFileName = path.basename(item.image);          // 유저 사진 이름
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
-                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                if (userFileName.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                    item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                }
                 item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
                 if( item.isBookmark === null) {
                     item.isBookmark = 0;
@@ -456,7 +462,7 @@ function searchCookerStore(data, callback) {
         if (err) {
             return callback(err);
         }
-        data.keyword = "%" + data.keyword + "%";
+        data.keyword = '%' + data.keyword + '%';
         data.pageNo = parseInt(data.rowCount * (data.pageNo - 1)); // 숫자로 변환
         data.rowCount = parseInt(data.rowCount); // 숫자로 변환
 
@@ -469,7 +475,9 @@ function searchCookerStore(data, callback) {
             async.each(results, function (item, done) {
                 var userFileName = path.basename(item.image);         // 유저 사진 이름
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
-                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                if (userFileName.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                    item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                }
                 item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
                 if( item.isBookmark === null) {
                     item.isBookmark = 0;
@@ -491,9 +499,9 @@ function searchCookerStore(data, callback) {
 /* 쿠커 후기 목록 조회 */
 function showCookerReview(data, callback) {
     var sql_showCookerReview =
-        'select cr.eater_user_id eid, u.image, u.name, taste, price, cleanliness, kindness, review, date_format(date, \'%Y/%m/%d %H:%i\') date ' +
-        'from cooker_review cr join user u on (cr.eater_user_id = u.id) ' +
-        'where cr.cooker_user_id = ?';
+        'select r.eater_user_id eid, u.image, u.name, taste, price, cleanliness, kindness, content, date_format(date, \'%Y/%m/%d %H:%i\') date ' +
+        'from review r join user u on (r.eater_user_id = u.id) ' +
+        'where r.cooker_user_id = ?';
 
     dbPool.logStatus();
     dbPool.getConnection(function (err, dbConn) {
@@ -506,14 +514,19 @@ function showCookerReview(data, callback) {
             if (err) {
                 return callback(err);
             }
-            var filename = path.basename(results[0].image); // 사진이름
-            if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
-                results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+            if (results.length === 0) {
+                callback(null, results);
+            } else {
+                var filename = path.basename(results[0].image); // 사진이름
+                if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                    results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                }
+                callback(null, results);
             }
-            callback(null, results);
         });
     });
 }
+
 module.exports.showCookerInfo = showCookerInfo;
 module.exports.updateCookerInfo = updateCookerInfo;
 module.exports.showCookerStore = showCookerStore;

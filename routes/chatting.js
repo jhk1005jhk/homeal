@@ -2,42 +2,37 @@ var express = require('express');
 var router = express.Router();
 var isAuthenticated = require('./common').isAuthenticated;
 var Chatting = require('../models/chatting');
+var Common = require('../models/common');
 var logger = require('../common/logger');
-var fcm = require('node-gcm');
+var FCM = require('fcm').FCM;
 
 /* 채팅 메시지 송신 */
 router.post('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    var fcm = new FCM(process.env.FCM_SERVER_KEY);
     var data = {};
+
     data.sender = req.user.id;
     data.receiver = req.body.receiver;
     data.message = req.body.message;
-
     // 받을 사람 토큰 가져오기
-    Chatting.selectRegistarionToken(data, function(err, result) {
-        var msg = fcm.Message({
-            data: {
-                // title: 'Homeal',
-                // icon: 'ic_launcher',
-                // body: 'We have new MESSAGE for you :)',
-                type: 1 // (1) 채팅, (2)예약, (3) 후기
-            }
-        });
-        var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
-        sender.send(msg, {registrationTokens: result}, function(err, response) {
+    Common.selectRegistarionToken(data, function(err, result) {
+        var msg = {
+            to: result[0].registration_token,
+            'data.key': '1'
+        };
+        fcm.send(msg, function(err, messageId) {
             if (err) {
-                return next(err);
+                console.log('Something has gone word!');
+                console.log(err);
+            } else {
+                console.log('Sent with message ID: ', messageId);
+                Chatting.insertChattingLog(data, function(err, result) {
+                    if (err) {
+                        return next(err);
+                    }
+                });
             }
-            Chatting.insertChattingLog(data, function(err, result) {
-                if (err) {
-                    return next(err);
-                }
-            });
-            console.log('보내는 사람: ' + data.sender);
-            console.log('받는 사람: ' + data.receiver);
-            console.log('메시지: ' + data.message);
-            console.log('받는사람 토큰: ' + result[0].registration_token);
-            console.log(response);
             res.send({
                 code: 1,
                 message: '메시지 전송 완료'

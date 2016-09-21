@@ -6,18 +6,20 @@ var fs = require('fs');
 /* 리뷰 작성 */
 function createReview(data, callback) {
     var sql_createReviewOfCooker =
-        'insert into cooker_review (cooker_user_id, eater_user_id, taste, price, cleanliness, kindness, review) ' +
+        'insert into review (cooker_user_id, eater_user_id, taste, price, cleanliness, kindness, content) ' +
         'values (?, ?, ?, ?, ?, ?, ?)';
     var sql_updateReviewCount =
         'update cooker ' +
         'set reviewCnt = reviewCnt + 1 ' +
         'where user_id = ?';
+    var sql_selectCookerGrade =
+        'select round((avg(taste) + avg(price) + avg(cleanliness) + avg(kindness))/4, 1) grade ' +
+        'from cooker c join review r on (c.user_id = r.cooker_user_id) ' +
+        'where c.user_id = ?';
     var sql_updateCookerGrade =
-        'update user u ' +
-        'set u.grade = (select round((avg(taste) + avg(price) + avg(cleanliness) + avg(kindness))/4, 1) grade ' +
-                       'from cooker c join cooker_review cr on (c.user_id = cr.cooker_user_id) ' +
-                       'where cooker_user_id = ?) ' +
-        'where u.id = ?';
+        'update cooker ' +
+        'set grade = ? ' +
+        'where user_id = ?';
 
     dbPool.logStatus();
     dbPool.getConnection(function(err, dbConn) {
@@ -44,7 +46,7 @@ function createReview(data, callback) {
             });
         });
         function createReviewOfCooker(callback) {
-            dbConn.query(sql_createReviewOfCooker, [data.cooker, data.id, data.taste, data.price, data.cleanliness, data.kindness, data.review], function(err, result) {
+            dbConn.query(sql_createReviewOfCooker, [data.cooker, data.id, data.taste, data.price, data.cleanliness, data.kindness, data.content], function(err, result) {
                 if (err) {
                     return callback(err);
                 }
@@ -60,13 +62,30 @@ function createReview(data, callback) {
             });
         }
         function updateGrade(callback) {
-            dbConn.query(sql_updateCookerGrade, [data.cooker, data.cooker], function(err, result) {
-                if (err) {
-                    callback(err);
-                } else {
-                    callback(null, result);
-                }
-            })
+                async.waterfall([selectCookerGrade, updateCookerGrade], function(err, results) {
+                    if (err) {
+                        return callback(err)
+                    }
+                    callback(null);
+            });
+            function selectCookerGrade(callback) {
+                dbConn.query(sql_selectCookerGrade, [data.cooker], function(err, results) {
+                    if (err) {
+                        return callback(err);
+                    } else {
+                        callback(null, results[0].grade);
+                    }
+                });
+            }
+            function updateCookerGrade(grade, callback) {
+                dbConn.query(sql_updateCookerGrade, [grade, data.cooker], function(err, result) {
+                    if (err) {
+                        return callback(err);
+                    } else {
+                        callback(null, result);
+                    }
+                });
+            }
         }
     });
 }

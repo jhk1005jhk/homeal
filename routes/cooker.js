@@ -63,6 +63,27 @@ router.put('/me', isSecure, isAuthenticated, function(req, res, next) {
         });
     });
 });
+/* 쿠커 자신의 가게 조회 */
+router.get('/store', isAuthenticated, function(req, res, next) {
+    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
+    var message = "쿠커 페이지 조회 완료";
+    var data = {};
+    data.id = req.user.id;
+
+    Cooker.showCookerStore(data, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        res.send({
+            code: 1,
+            message: message,
+            cooker_thumbnail : results[0],
+            cooker_info: results[1],
+            cooker_menu: results[2],
+            cooker_schedule: results[3]
+        });
+    });
+});
 /* 쿠커 가게 페이지 조회 */
 router.get('/:id', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -113,6 +134,7 @@ router.get('/', isAuthenticated, function(req, res, next) {
     } else if (req.url.match(/\?pageNo=\d+&rowCount=\d+/i)) {
         message = '쿠커 섬네일 목록 조회 완료';
         data = {};
+        data.id = req.user.id;
         data.pageNo = req.query.pageNo;
         data.rowCount = req.query.rowCount;
 

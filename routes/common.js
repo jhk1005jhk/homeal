@@ -2,6 +2,7 @@
 function isAuthenticated(req, res, next) {
     if (!req.user) {
         return res.status(401).send({
+            code: 0,
             'message': '로그인이 필요합니다(local or facebook login require)'
         });
     }
@@ -11,6 +12,7 @@ function isAuthenticated(req, res, next) {
 function isSecure(req, res, next) {
     if (!req.secure) {
         return res.status(426).send({
+            code: 0,
             'message': '인증이 필요합니다(https connection require)'
         });
     }

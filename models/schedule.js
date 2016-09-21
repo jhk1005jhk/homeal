@@ -40,5 +40,6 @@ function deleteSchedule(data, callback) {
         });
     });
 }
+
 module.exports.createSchedule = createSchedule;
 module.exports.deleteSchedule = deleteSchedule;

@@ -25,7 +25,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
         });
     });
 });
-
 /* 일정 삭제 */
 router.delete('/:id', function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);

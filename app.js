@@ -49,7 +49,7 @@ app.use(session({
     path: '/',
     httpOnly: true,
     secure: false, // 안전한 상태에서만 쿠키를 보내겠습니다. https 에서만 보내겠다.
-    maxAge: 1000 * 60 * 60 * 24 * 30
+    maxAge: 1000 * 60 * 60 * 24 * 30 // 밀리초, 초, 분, 시, 일
   }
 }));
 app.use(passport.initialize());

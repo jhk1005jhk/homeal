@@ -61,7 +61,6 @@ router.get('/local/logout', isSecure, isAuthenticated, function(req, res, next) 
         message: '로컬 로그아웃 완료'
     });
 });
-
 //----------------------------------------------------------------------------------------------------------------------
 // 페이스북 관련
 //----------------------------------------------------------------------------------------------------------------------
@@ -73,7 +72,6 @@ passport.use(new FacebookStrategy({
         profileFields: ['id', 'displayName', 'name', 'emails', 'gender', 'profileUrl', 'photos']
     },
     function(accessToken, refreshToken, profile, done) {
-        console.log('액세스 토큰: ' + accessToken);
         User.FB_findOrCreate(profile, function (err, user) {
             if (err) {
                 return done(err);

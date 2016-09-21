@@ -30,22 +30,27 @@ router.post('/', isSecure, isAuthenticated, function(req, res, next) {
     });
 });
 /* 회원 정보 조회 */
-router.get('/:id', isSecure, isAuthenticated, function(req, res, next) {
+router.get('/me', isSecure, isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    var message = '회원 정보 조회 완료';
+    var message = '사용자 세션 조회 완료';
     var showUser = {};
-    showUser.id = req.params.id;
-
-    User.showUser(showUser, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.send({
-            code: 1,
-            message: message,
-            result: results
-        });
+    showUser.id = req.user.id;
+    console.log(showUser.id);
+    res.send({
+        code: 1,
+        message: message,
+        result: req.user.type
     });
+    // User.showUser(showUser, function(err, results) {
+    //     if (err) {
+    //         return next(err);
+    //     }
+    //     res.send({
+    //         code: 1,
+    //         message: message,
+    //         result: results
+    //     });
+    // });
 });
 /* 회원 정보 삭제 (보류) */
 router.delete('/me', isAuthenticated, function(req, res, next) {

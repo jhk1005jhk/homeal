@@ -1,15 +1,15 @@
 var express = require('express');
 var router = express.Router();
 var Reservation = require('../models/reservation');
-var Notification = require('../models/notification');
+var Common = require('../models/common');
 var isAuthenticated = require('./common').isAuthenticated;
 var logger = require('../common/logger');
-var fcm = require('node-gcm');
+var FCM = require('fcm').FCM;
 
 /* 예약 생성 */
 router.post('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    var message = '예약 요청 완료';
+    var fcm = new FCM(process.env.FCM_SERVER_KEY);
     var data = {};
     data.eater = req.user.id;
     data.cooker = req.body.cooker;
@@ -21,35 +21,32 @@ router.post('/', isAuthenticated, function(req, res, next) {
     } else {
         data.menus.push(req.body.menus);
     }
-
     // 예약 생성
     Reservation.createReservation(data, function(err, result) {
         if (err) {
             return next(err);
         }
-        // // 예약 알림 전송
-        // Notification.selectRegistarionToken(data, function(err, token) {
-        //     var msg = fcm.Message({
-        //         data: {
-        //             key1: 'value',
-        //             key2: 'value'
-        //         },
-        //         notification: {
-        //             title: 'Homeal',
-        //             icon: 'ic_launcher',
-        //             body: 'We have new RESERVATION INFO of you :)'
-        //         }
-        //     });
-        //
-        //     var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
-        //     sender.send(msg, {registrationTokens: token}, function(err, response) {
-        //         if (err)
-        //             return next(err);
-        //     });
-        // });
-        res.send({
-            code: 1,
-            message: message
+        var tokenData = {};
+        tokenData.receiver = req.body.cooker;
+        // 예약 알림 전송
+        Common.selectRegistarionToken(tokenData, function(err, result) {
+            console.log(result[0].registration_token);
+            var msg = {
+                to: result[0].registration_token,
+                'data.key': '2',
+                'data.code': '1'
+            };
+            fcm.send(msg, function (err, messageId) {
+                if (err) {
+                    console.log('Something has gone word!');
+                } else {
+                    console.log('Sent with message ID: ', messageId);
+                }
+            });
+            res.send({
+                code: 1,
+                message: '예약 요청 완료'
+            });
         });
     });
 });
@@ -76,6 +73,7 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
     var message;
     var code;
+    var fcm = new FCM(process.env.FCM_SERVER_KEY);
     var data = {};
     data.reservation = req.params.id;
     data.status = req.body.status;
@@ -92,9 +90,27 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
             case 6: message = '후기를 작성해주세요'; code = 6; break;        // 쿠커가 잇터에게 후기 작성 요청
             case 7: message = '식사 완료'; code = 7; break;                 // 잇터가 후기를 작성하면 식사 완료 상태로 변경
         }
-        res.send({
-            code: code,
-            message: message
+        var tokenData = {};
+        tokenData.receiver = req.body.receiver;
+        // 예약 알림 전송
+        Common.selectRegistarionToken(tokenData, function(err, result) {
+            console.log(result[0].registration_token);
+            var msg = {
+                to: result[0].registration_token,
+                'data.key': '2',
+                'data.code': code.toString()
+            };
+            fcm.send(msg, function (err, messageId) {
+                if (err) {
+                    console.log('Something has gone word!');
+                } else {
+                    console.log('Sent with message ID: ', messageId);
+                }
+            });
+            res.send({
+                code: code,
+                message: message
+            });
         });
     });
 });

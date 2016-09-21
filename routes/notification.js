@@ -24,7 +24,6 @@ router.post('/', function(req, res, next) {
                     body: 'We have new REVIEW INFO of you :)'
                 }
             });
-
             var sender = new fcm.Sender(process.env.FCM_SERVER_KEY); // sender 객체만들어서 보낸다
             sender.send(msg, {registrationTokens: token}, function(err, response) {
                 if (err)

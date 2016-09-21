@@ -53,9 +53,9 @@ router.put('/:id', isAuthenticated, function(req, res, next) {
         data.id = req.params.id;
         data.name = fields.name;
         data.image = files.image;
-        data.price = parseInt(fields.price, 10);
+        data.price = fields.price;
         data.introduce = fields.introduce;
-        data.activation = parseInt(fields.activation, 10);
+        data.activation = fields.activation;
         Menu.updateMenu(data, function(err) {
             if (err) {
                 return next(err);

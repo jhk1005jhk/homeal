@@ -40,7 +40,6 @@ router.post('/', isAuthenticated, function(req, res, next) {
         });
     });
 });
-
 /* 대표 사진 삭제 */
 router.delete('/', isAuthenticated, function(req, res, next) {
     logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
@@ -54,7 +53,6 @@ router.delete('/', isAuthenticated, function(req, res, next) {
     } else {
         data.ids.push(req.body.ids);
     }
-
     Photo.deletePhoto(data, function(err, result) {
         if (err) {
             return next(err);

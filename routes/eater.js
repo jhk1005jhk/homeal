@@ -56,23 +56,5 @@ router.put('/me', isSecure, isAuthenticated, function (req, res, next) {
         });
     });
 });
-/* 잇터 후기 조회 */
-router.get('/:id/reviews', isAuthenticated, function(req, res, next) {
-    logger.log('debug', '%s %s://%s%s', req.method, req.protocol, req.headers['host'], req.originalUrl);
-    var id = req.params.id;
-    var message = "잇터 후기 조회 완료";
-    var data = {};
-    data.id = id;
-    Eater.showEaterReview(data, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.send({
-            code: 1,
-            message: message,
-            result: results
-        });
-    });
-});
 
 module.exports = router;

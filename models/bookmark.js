@@ -70,6 +70,11 @@ function showBookmark(data, callback) {
                 return callback(err);
             }
             async.each(results, function (item, done) {
+                if (item.isBookmark === null) {
+                    item.isBookmark = 0;
+                } else {
+                    item.isBookmark = 1;
+                }
                 var userFileName = path.basename(item.image);          // 유저 사진 이름
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
                 item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
