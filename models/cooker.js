@@ -435,7 +435,7 @@ function showCookerStoreList(data, callback) {
                     item.isBookmark = 1;
                 }
                 done(null);
-            }, function(err) {
+            }, function (err) {
                 dbConn.release();
                 dbPool.logStatus();
                 if (err) {
@@ -517,10 +517,13 @@ function showCookerReview(data, callback) {
             if (results.length === 0) {
                 callback(null, results);
             } else {
-                var filename = path.basename(results[0].image); // 사진이름
-                if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
-                    results[0].image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
-                }
+                async.each(results, function (item, done) {
+                    var filename = path.basename(item.image); // 사진이름
+                    if (filename.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                        item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + filename);
+                    }
+                    done(null);
+                });
                 callback(null, results);
             }
         });

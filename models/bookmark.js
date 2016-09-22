@@ -75,10 +75,12 @@ function showBookmark(data, callback) {
                 } else {
                     item.isBookmark = 1;
                 }
+
                 var userFileName = path.basename(item.image);          // 유저 사진 이름
                 var thumbnailFileName = path.basename(item.thumbnail); // 섬네일 사진 이름
-                item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
-                item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
+                if (userFileName.toString() !== 'picture?type=large') { // 페이스북 사진인지 판단
+                    item.image = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/users/' + userFileName);
+                }item.thumbnail = url.resolve(process.env.HOST_ADDRESS + ':' + process.env.PORT, '/thumbnails/' + thumbnailFileName);
                 if( item.isBookmark === null) {
                     item.isBookmark = 0;
                 } else {

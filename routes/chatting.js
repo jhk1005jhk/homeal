@@ -19,7 +19,8 @@ router.post('/', isAuthenticated, function(req, res, next) {
     Common.selectRegistarionToken(data, function(err, result) {
         var msg = {
             to: result[0].registration_token,
-            'data.key': '1'
+            'data.key': '1',
+            'data.code': '0'
         };
         fcm.send(msg, function(err, messageId) {
             if (err) {
